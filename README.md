@@ -1,5 +1,7 @@
 # sshc
 
+SSH client using ~/.ssh/config
+
 ## Usage
 
 Describe `~/.ssh/config` as follows
