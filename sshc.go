@@ -91,7 +91,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	proxyCommand := ssh_config.Get(host, "ProxyCommand")
 	if proxyCommand != "" {
 		client, server := net.Pipe()
-		proxyCommand = strings.Replace(proxyCommand, "%h", hostname, -1)
+		proxyCommand = c.unescapeCharacters(proxyCommand)
 		proxyCommand = strings.Replace(proxyCommand, "%p", port, -1)
 		proxyCommand = strings.Replace(proxyCommand, "%r", user, -1)
 		cmd := exec.Command("sh", "-c", proxyCommand)
@@ -110,6 +110,16 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	return ssh.Dial("tcp", addr, sshConfig)
 }
 
+func (c *Config) unescapeCharacters(v string) string {
+	user := c.User
+	port := strconv.Itoa(c.Port)
+	hostname, _ := c.getHostname()
+	v = strings.Replace(v, "%h", hostname, -1)
+	v = strings.Replace(v, "%p", port, -1)
+	v = strings.Replace(v, "%r", user, -1)
+	return v
+}
+
 func (c *Config) getHostname() (string, error) {
 	h, err := ssh_config.GetStrict(c.Host, "Hostname")
 	if err != nil {
@@ -126,6 +136,7 @@ func (c *Config) getIdentityFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	keyPath = c.unescapeCharacters(keyPath)
 	homeDir, err := homedir.Dir()
 	if err != nil {
 		return "", err
