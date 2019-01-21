@@ -51,7 +51,10 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		Port: port,
 	}
 	for _, option := range options {
-		option(c)
+		err = option(c)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return c.DialWithConfig()
 }
