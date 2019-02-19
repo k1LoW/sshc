@@ -1,6 +1,7 @@
 package sshc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -8,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
 	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Config return SSH Client config
@@ -79,9 +82,20 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	signer, err := ssh.ParsePrivateKey(key)
+	signer, err := sshkeys.ParseEncryptedPrivateKey(key, []byte{})
 	if err != nil {
-		return nil, err
+		// passphrase
+		fmt.Printf("Enter passphrase for key '%s': ", keyPath)
+		passPhrase, err := terminal.ReadPassword(0)
+		if err != nil {
+			fmt.Println("")
+			return nil, err
+		}
+		signer, err = sshkeys.ParseEncryptedPrivateKey(key, passPhrase)
+		if err != nil {
+			fmt.Println("")
+			return nil, err
+		}
 	}
 	auth = append(auth, ssh.PublicKeys(signer))
 

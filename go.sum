@@ -1,3 +1,7 @@
+github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681 h1:JS2rl38kZmHgWa0xINSaSYH0Whtvem64/4+Ef0+Y5pE=
+github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681/go.mod h1:WfDateMPQ/55dPbZRp5Zxrux5WiEaHsjk9puUhz0KgY=
+github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a h1:saTgr5tMLFnmy/yg3qDTft4rE5DY2uJ/cCxCe3q0XTU=
+github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a/go.mod h1:Bw9BbhOJVNR+t0jCqx2GC6zv0TGBsShs56Y3gfSCvl0=
 github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e h1:RgQk53JHp/Cjunrr1WlsXSZpqXn+uREuHvUVcK82CV8=
 github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnGC8aR0=
