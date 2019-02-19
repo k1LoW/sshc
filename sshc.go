@@ -96,6 +96,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 			fmt.Println("")
 			return nil, err
 		}
+		fmt.Println("")
 	}
 	auth = append(auth, ssh.PublicKeys(signer))
 
