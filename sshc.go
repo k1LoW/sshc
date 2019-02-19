@@ -18,26 +18,35 @@ import (
 
 // Config return SSH Client config
 type Config struct {
-	Host string
-	User string
-	Port int
+	host       string
+	user       string
+	port       int
+	passphrase []byte
 }
 
 // Option function change Config
 type Option func(*Config) error
 
-// User return Option set Config.User
+// User return Option set Config.user
 func User(u string) Option {
 	return func(c *Config) error {
-		c.User = u
+		c.user = u
 		return nil
 	}
 }
 
-// Port return Option set Config.Port
+// Port return Option set Config.port
 func Port(p int) Option {
 	return func(c *Config) error {
-		c.Port = p
+		c.port = p
+		return nil
+	}
+}
+
+// Passphrase return Option set Config.passphrase
+func Passphrase(p []byte) Option {
+	return func(c *Config) error {
+		c.passphrase = p
 		return nil
 	}
 }
@@ -49,9 +58,10 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	c := &Config{
-		Host: host,
-		User: ssh_config.Get(host, "User"),
-		Port: port,
+		host:       host,
+		user:       ssh_config.Get(host, "User"),
+		port:       port,
+		passphrase: []byte{},
 	}
 	for _, option := range options {
 		err = option(c)
@@ -64,9 +74,9 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 
 // DialWithConfig return *ssh.Client using ~/.ssh/config
 func (c *Config) DialWithConfig() (*ssh.Client, error) {
-	host := c.Host
-	user := c.User
-	port := strconv.Itoa(c.Port)
+	host := c.host
+	user := c.user
+	port := strconv.Itoa(c.port)
 	hostname, err := c.getHostname()
 	if err != nil {
 		return nil, err
@@ -82,7 +92,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	signer, err := sshkeys.ParseEncryptedPrivateKey(key, []byte{})
+	signer, err := sshkeys.ParseEncryptedPrivateKey(key, c.passphrase)
 	if err != nil {
 		// passphrase
 		fmt.Printf("Enter passphrase for key '%s': ", keyPath)
@@ -129,8 +139,8 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 }
 
 func (c *Config) unescapeCharacters(v string) string {
-	user := c.User
-	port := strconv.Itoa(c.Port)
+	user := c.user
+	port := strconv.Itoa(c.port)
 	hostname, _ := c.getHostname()
 	v = strings.Replace(v, "%h", hostname, -1)
 	v = strings.Replace(v, "%p", port, -1)
@@ -139,18 +149,18 @@ func (c *Config) unescapeCharacters(v string) string {
 }
 
 func (c *Config) getHostname() (string, error) {
-	h, err := ssh_config.GetStrict(c.Host, "Hostname")
+	h, err := ssh_config.GetStrict(c.host, "Hostname")
 	if err != nil {
 		return "", err
 	}
 	if h == "" {
-		return c.Host, nil
+		return c.host, nil
 	}
 	return h, nil
 }
 
 func (c *Config) getIdentityFile() (string, error) {
-	keyPath, err := ssh_config.GetStrict(c.Host, "IdentityFile")
+	keyPath, err := ssh_config.GetStrict(c.host, "IdentityFile")
 	if err != nil {
 		return "", err
 	}
