@@ -1,0 +1,16 @@
+Host *
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+
+Host bastion
+  HostName 127.0.0.1
+  User root
+  Port 1022
+  IdentityFile ./test_rsa
+
+Host server
+  HostName  172.30.0.3
+  User root
+  Port 22
+  IdentityFile ./test_rsa
+  ProxyCommand ssh -W %h:%p bastion -F ./ssh_config

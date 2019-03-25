@@ -1,0 +1,26 @@
+version: '3'
+services:
+  bastion:
+    build: .
+    ports:
+    - "1022:22"
+    image: "sshd-bastion"
+    hostname: bastion
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.2
+  server:
+    build: .
+    image: "sshd-bastion"
+    hostname: server
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.3
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.30.0.0/24
