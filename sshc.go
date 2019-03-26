@@ -199,7 +199,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		fmt.Println("")
 	}
 
-	if sshAuthSockExists() {
+	if c.Get(host, "ForwardAgent") == "yes" && sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
 			return nil, err
