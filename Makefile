@@ -1,11 +1,14 @@
-GO ?= GO111MODULE=on go
+export GO111MODULE=on
 
 default: test
 
-ci: test e2e
+ci: test integration
 
 test:
-	$(GO) test ./... -coverprofile=coverage.txt -covermode=count
+	go test ./... -coverprofile=coverage.txt -covermode=count
 
-e2e:
-	./test/run.sh
+integration:
+	chmod 600 ./testdata/id_rsa
+	go test ./... -integration
+
+.PHONY: default test

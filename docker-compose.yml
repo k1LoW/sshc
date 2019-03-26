@@ -6,7 +6,7 @@ services:
     ports:
       - "1022:22"
     volumes:
-      - ./test/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
     networks:
       app_net:
         ipv4_address: 172.30.0.2
@@ -14,7 +14,7 @@ services:
     image: panubo/sshd
     hostname: server
     volumes:
-      - ./test/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
     networks:
       app_net:
         ipv4_address: 172.30.0.3
