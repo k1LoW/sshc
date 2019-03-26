@@ -1,0 +1,19 @@
+language: go
+go:
+  - 1.11.x
+  - 1.12.x
+  - master
+env: GO111MODULE=on
+services:
+  - docker
+addons:
+  apt:
+    update: true
+install:
+  - echo $TRAVIS_GO_VERSION
+  - sudo pip install codecov
+  - docker-compose up -d
+script:
+  - make ci
+after_script:
+  - codecov

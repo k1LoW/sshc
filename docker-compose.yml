@@ -1,0 +1,28 @@
+version: '3'
+services:
+  bastion:
+    image: panubo/sshd
+    hostname: bastion
+    ports:
+      - "1022:22"
+    volumes:
+      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.2
+  server:
+    image: panubo/sshd
+    hostname: server
+    volumes:
+      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.3
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.30.0.0/24

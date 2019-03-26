@@ -6,22 +6,27 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
-	"github.com/mitchellh/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// Config return SSH Client config
+// Config return SSH Client config. not ssh_config
 type Config struct {
-	host       string
-	user       string
-	port       int
-	passphrase []byte
+	configPaths []string
+	host        string
+	user        string
+	port        int
+	passphrase  []byte
+	configs     []*ssh_config.Config
+	loader      sync.Once
 }
 
 // Option function change Config
@@ -51,17 +56,45 @@ func Passphrase(p []byte) Option {
 	}
 }
 
-// NewClient return *ssh.Client using ~/.ssh/config
-func NewClient(host string, options ...Option) (*ssh.Client, error) {
-	port, err := strconv.Atoi(ssh_config.Get(host, "Port"))
-	if err != nil {
-		return nil, err
+// ConfigPath is alias of UnshiftConfigPath
+func ConfigPath(p string) Option {
+	return UnshiftConfigPath(p)
+}
+
+// UnshiftConfigPath return Option unshift ssh_config path to Config.configpaths
+func UnshiftConfigPath(p string) Option {
+	return func(c *Config) error {
+		c.configPaths = unique(append([]string{p}, c.configPaths...))
+		return nil
 	}
+}
+
+// AppendConfigPath return Option append ssh_config path to Config.configpaths
+func AppendConfigPath(p string) Option {
+	return func(c *Config) error {
+		c.configPaths = unique(append(c.configPaths, p))
+		return nil
+	}
+}
+
+// ClearConfigPath return Option clear Config.configpaths
+func ClearConfigPath(p string) Option {
+	return func(c *Config) error {
+		c.configPaths = []string{}
+		return nil
+	}
+}
+
+// NewClient return *Config
+func NewConfig(host string, options ...Option) (*Config, error) {
+	var err error
+
 	c := &Config{
-		host:       host,
-		user:       ssh_config.Get(host, "User"),
-		port:       port,
-		passphrase: []byte{},
+		configPaths: []string{
+			filepath.Join("~", ".ssh", "config"),
+			filepath.Join("/", "etc", "ssh", "ssh_config"),
+		},
+		host: host,
 	}
 	for _, option := range options {
 		err = option(c)
@@ -69,10 +102,64 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 			return nil, err
 		}
 	}
+
+	c.user = c.Get(host, "User")
+	c.port, err = strconv.Atoi(c.Get(host, "Port"))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, option := range options {
+		err = option(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c, nil
+}
+
+// NewClient return *ssh.Client
+func NewClient(host string, options ...Option) (*ssh.Client, error) {
+	c, err := NewConfig(host, options...)
+	if err != nil {
+		return nil, err
+	}
 	return c.DialWithConfig()
 }
 
-// DialWithConfig return *ssh.Client using ~/.ssh/config
+// Get return value
+func (c *Config) Get(alias, key string) string {
+	homeDir, err := homedir.Dir()
+	if err != nil {
+		return ""
+	}
+	c.loader.Do(func() {
+		for _, p := range c.configPaths {
+			cPath := strings.Replace(p, "~", homeDir, 1)
+			if _, err := os.Lstat(cPath); err != nil {
+				continue
+			}
+			f, err := os.Open(cPath)
+			if err != nil {
+				continue
+			}
+			cfg, err := ssh_config.Decode(f)
+			if err != nil {
+				continue
+			}
+			c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
+		}
+	})
+	for _, cfg := range c.configs {
+		val, err := cfg.Get(alias, key)
+		if err != nil || val != "" {
+			return val
+		}
+	}
+	return ssh_config.Default(key)
+}
+
+// DialWithConfig return *ssh.Client
 func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	host := c.host
 	user := c.user
@@ -116,7 +203,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // FIXME
 	}
 
-	proxyCommand := ssh_config.Get(host, "ProxyCommand")
+	proxyCommand := c.Get(host, "ProxyCommand")
 	if proxyCommand != "" {
 		client, server := net.Pipe()
 		proxyCommand = c.unescapeCharacters(proxyCommand)
@@ -149,10 +236,7 @@ func (c *Config) unescapeCharacters(v string) string {
 }
 
 func (c *Config) getHostname() (string, error) {
-	h, err := ssh_config.GetStrict(c.host, "Hostname")
-	if err != nil {
-		return "", err
-	}
+	h := c.Get(c.host, "Hostname")
 	if h == "" {
 		return c.host, nil
 	}
@@ -160,10 +244,7 @@ func (c *Config) getHostname() (string, error) {
 }
 
 func (c *Config) getIdentityFile() (string, error) {
-	keyPath, err := ssh_config.GetStrict(c.host, "IdentityFile")
-	if err != nil {
-		return "", err
-	}
+	keyPath := c.Get(c.host, "IdentityFile")
 	keyPath = c.unescapeCharacters(keyPath)
 	homeDir, err := homedir.Dir()
 	if err != nil {
@@ -175,4 +256,16 @@ func (c *Config) getIdentityFile() (string, error) {
 		}
 	}
 	return strings.Replace(keyPath, "~", homeDir, 1), nil
+}
+
+func unique(s []string) []string {
+	keys := make(map[string]bool)
+	l := []string{}
+	for _, e := range s {
+		if _, v := keys[e]; !v {
+			keys[e] = true
+			l = append(l, e)
+		}
+	}
+	return l
 }

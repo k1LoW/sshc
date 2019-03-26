@@ -1,4 +1,4 @@
-# sshc
+# sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc)
 
 SSH client using ~/.ssh/config
 
@@ -45,3 +45,7 @@ func main() {
 	log.Printf("result: %s", stdout.String())
 }
 ```
+
+## References
+
+- https://github.com/kevinburke/ssh_config
