@@ -1,4 +1,4 @@
-# sshc
+# sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc)
 
 SSH client using ~/.ssh/config
 
