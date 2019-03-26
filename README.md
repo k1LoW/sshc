@@ -45,3 +45,7 @@ func main() {
 	log.Printf("result: %s", stdout.String())
 }
 ```
+
+## References
+
+- https://github.com/kevinburke/ssh_config
