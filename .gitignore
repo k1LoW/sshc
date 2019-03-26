@@ -1,3 +1,2 @@
 private_test.go
-test/test_rsa
-test/test_rsa.pub
+coverage.txt
