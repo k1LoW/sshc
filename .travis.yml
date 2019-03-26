@@ -12,6 +12,7 @@ addons:
 install:
   - echo $TRAVIS_GO_VERSION
   - sudo pip install codecov
+  - docker-compose up -d
 script:
   - make ci
 after_script:
