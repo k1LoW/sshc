@@ -34,7 +34,7 @@ func sshToServer() error {
 }
 
 func ssh(dest string) error {
-	client, err := sshc.NewClient(dest)
+	client, err := sshc.NewClient(dest, sshc.ConfigPath("./ssh_config"))
 	if err != nil {
 		log.Fatal(err)
 	}
