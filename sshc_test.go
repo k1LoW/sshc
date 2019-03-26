@@ -42,3 +42,33 @@ func TestConfigPath(t *testing.T) {
 		t.Fatalf("want = %#v, got = %#v", want2, got)
 	}
 }
+
+func TestClearConfigPath(t *testing.T) {
+	c, err := NewConfig("example.com", ClearConfigPath(), ConfigPath("/path/to/ssh_config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 1
+	if got := len(c.configPaths); got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+
+	want2 := "/path/to/ssh_config"
+	if got := c.configPaths[0]; got != want2 {
+		t.Fatalf("want = %#v, got = %#v", want2, got)
+	}
+}
+
+func TestGet(t *testing.T) {
+	host := "server"
+	c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/ssh_config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "172.30.0.3"
+	if got := c.Get(host, "Hostname"); got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+}
