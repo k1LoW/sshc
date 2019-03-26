@@ -2,6 +2,7 @@ package sshc
 
 import (
 	"fmt"
+	"golang.org/x/crypto/ssh/agent"
 	"io/ioutil"
 	"net"
 	"os"
@@ -13,7 +14,7 @@ import (
 
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -195,7 +196,24 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		}
 		fmt.Println("")
 	}
-	auth = append(auth, ssh.PublicKeys(signer))
+
+	if sshAuthSockExists() {
+		sshAgentClient, err := newSSHAgentClient()
+		if err != nil {
+			return nil, err
+		}
+		identities, err := sshAgentClient.List()
+		if err != nil {
+			return nil, err
+		}
+		if len(identities) > 0 {
+			auth = append(auth, ssh.PublicKeysCallback(sshAgentClient.Signers))
+		} else {
+			auth = append(auth, ssh.PublicKeys(signer))
+		}
+	} else {
+		auth = append(auth, ssh.PublicKeys(signer))
+	}
 
 	sshConfig := &ssh.ClientConfig{
 		User:            user,
@@ -268,4 +286,18 @@ func unique(s []string) []string {
 		}
 	}
 	return l
+}
+
+func newSSHAgentClient() (agent.ExtendedAgent, error) {
+	socket := os.Getenv("SSH_AUTH_SOCK")
+	conn, err := net.Dial("unix", socket)
+	if err != nil {
+		return nil, err
+	}
+
+	return agent.NewClient(conn), nil
+}
+
+func sshAuthSockExists() bool {
+	return os.Getenv("SSH_AUTH_SOCK") != ""
 }
