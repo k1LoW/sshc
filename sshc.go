@@ -19,6 +19,11 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+var defaultConfigPaths = []string{
+	filepath.Join("~", ".ssh", "config"),
+	filepath.Join("/", "etc", "ssh", "ssh_config"),
+}
+
 // Config return SSH Client config. not ssh_config
 type Config struct {
 	configPaths []string
@@ -79,7 +84,7 @@ func AppendConfigPath(p string) Option {
 }
 
 // ClearConfigPath return Option clear Config.configpaths
-func ClearConfigPath(p string) Option {
+func ClearConfigPath() Option {
 	return func(c *Config) error {
 		c.configPaths = []string{}
 		return nil
@@ -91,11 +96,8 @@ func NewConfig(host string, options ...Option) (*Config, error) {
 	var err error
 
 	c := &Config{
-		configPaths: []string{
-			filepath.Join("~", ".ssh", "config"),
-			filepath.Join("/", "etc", "ssh", "ssh_config"),
-		},
-		host: host,
+		configPaths: defaultConfigPaths,
+		host:        host,
 	}
 	for _, option := range options {
 		err = option(c)
