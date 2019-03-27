@@ -1,10 +1,10 @@
 # sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc) [![codecov](https://codecov.io/gh/k1LoW/sshc/branch/master/graph/badge.svg)](https://codecov.io/gh/k1LoW/sshc)
 
-SSH client using ~/.ssh/config
+`sshc.NewClient()` returns `*ssh.Client` using `~/.ssh/config` and `/etc/ssh/ssh_config`
 
 ## Usage
 
-Describe `~/.ssh/config` as follows
+Describe `~/.ssh/config`.
 
 ```
 Host myhost
@@ -14,7 +14,7 @@ Host myhost
   IdentityFile ~/.ssh/myhost_rsa
 ```
 
-`sshc.NewClient()` returns `*ssh.Client` using `~/.ssh/config`
+Use `sshc.NewClient()` as follows
 
 ``` go
 package main
@@ -57,10 +57,7 @@ Available options
 - User
 - Port
 - Passphrase
-- ConfigPath
-    - UnshiftConfigPath
-    - AppendConfigPath
-    - ClearConfigPath
+- ConfigPath ( Default is `~/.ssh/config` and `/etc/ssh/ssh_config` )
 - UseAgent ( Default is `true` )
 
 ## References
