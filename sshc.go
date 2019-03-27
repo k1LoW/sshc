@@ -2,7 +2,6 @@ package sshc
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh/agent"
 	"io/ioutil"
 	"net"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
@@ -199,7 +200,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		fmt.Println("")
 	}
 
-	if c.Get(host, "ForwardAgent") == "yes" && sshAuthSockExists() {
+	if sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
 			return nil, err
