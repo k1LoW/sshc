@@ -67,6 +67,11 @@ func TestSSH(t *testing.T) {
 			t.Fatalf("want = %#v, got = %#v", want, got)
 		}
 	}
+
+	err = killOpenSSHAgent(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func getHostname(dest string) (string, error) {
@@ -102,8 +107,25 @@ func startOpenSSHAgent(t *testing.T) error {
 
 	fields := bytes.Split(out, []byte(";"))
 	path := bytes.SplitN(fields[0], []byte("="), 2)
+	pid := bytes.SplitN(fields[2], []byte("="), 2)
+	err = os.Setenv("SSH_AUTH_SOCK", string(path[1]))
+	if err != nil {
+		return err
+	}
+	return os.Setenv("SSH_AGENT_PID", string(pid[1]))
+}
 
-	return os.Setenv("SSH_AUTH_SOCK", string(path[1]))
+func killOpenSSHAgent(t *testing.T) error {
+	bin, err := exec.LookPath("ssh-agent")
+	if err != nil {
+		t.Fatalf("Could not find ssh-agent")
+	}
+	cmd := exec.Command(bin, "-k")
+	_, err = cmd.Output()
+	if err != nil {
+		t.Fatalf("cmd.Output: %v", err)
+	}
+	return err
 }
 
 func addTestKey(t *testing.T) error {
