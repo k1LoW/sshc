@@ -14,6 +14,7 @@ install:
   - sudo pip install codecov
   - docker-compose up -d
 script:
+  - chmod 600 ./testdata/id_rsa
   - make ci
 after_script:
   - codecov
