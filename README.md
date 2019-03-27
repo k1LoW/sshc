@@ -1,4 +1,4 @@
-# sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc)
+# sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc) [![codecov](https://codecov.io/gh/k1LoW/sshc/branch/master/graph/badge.svg)](https://codecov.io/gh/k1LoW/sshc)
 
 SSH client using ~/.ssh/config
 
@@ -45,6 +45,23 @@ func main() {
 	log.Printf("result: %s", stdout.String())
 }
 ```
+
+## sshc.Option
+
+``` go
+client, err := sshc.NewClient("myhost", User("k1low"), Port(1022))
+```
+
+Available options
+
+- User
+- Port
+- Passphrase
+- ConfigPath
+    - UnshiftConfigPath
+    - AppendConfigPath
+    - ClearConfigPath
+- UseAgent ( Default is `true` )
 
 ## References
 
