@@ -14,3 +14,11 @@ Host server
   Port 22
   IdentityFile ./testdata/id_rsa
   ProxyCommand ssh -W %h:%p bastion -F ./testdata/ssh_config
+
+Host server_with_ssh_agent
+  HostName  172.30.0.3
+  User root
+  Port 22
+  IdentityFile ./testdata/id_rsa
+  ForwardAgent yes
+  ProxyCommand ssh -W %h:%p bastion -F ./testdata/ssh_config

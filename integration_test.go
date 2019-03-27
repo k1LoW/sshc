@@ -57,15 +57,13 @@ func TestSSH(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, tt := range sshTests {
-		got, err := getHostname(tt.hostname)
-		if err != nil {
-			t.Fatal(err)
-		}
-		want := fmt.Sprintf("%s\n", tt.hostname)
-		if got != want {
-			t.Fatalf("want = %#v, got = %#v", want, got)
-		}
+	got, err := getHostname("server_with_ssh_agent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := fmt.Sprintf("%s\n", "server")
+	if got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
 }
 
