@@ -11,12 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	"golang.org/x/crypto/ssh/agent"
-
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
 	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -32,6 +31,7 @@ type Config struct {
 	user        string
 	port        int
 	passphrase  []byte
+	useAgent    bool
 	configs     []*ssh_config.Config
 	loader      sync.Once
 }
@@ -92,6 +92,14 @@ func ClearConfigPath() Option {
 	}
 }
 
+// UseAgent return Option set Config.useAgent
+func UseAgent(u bool) Option {
+	return func(c *Config) error {
+		c.useAgent = u
+		return nil
+	}
+}
+
 // NewClient return *Config
 func NewConfig(host string, options ...Option) (*Config, error) {
 	var err error
@@ -99,6 +107,7 @@ func NewConfig(host string, options ...Option) (*Config, error) {
 	c := &Config{
 		configPaths: defaultConfigPaths,
 		host:        host,
+		useAgent:    true, // Default is true
 	}
 	for _, option := range options {
 		err = option(c)
@@ -200,7 +209,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		fmt.Println("")
 	}
 
-	if sshAuthSockExists() {
+	if c.useAgent && sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
 			return nil, err
