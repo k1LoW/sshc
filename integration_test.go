@@ -9,73 +9,74 @@ import (
 	"testing"
 )
 
-var (
-	integration = flag.Bool("integration", false, "run integration tests")
-)
-
-var sshTests = []struct {
-	hostname string
-}{
-	{"bastion"},
-	{"server"},
-}
+var integration = flag.Bool("integration", false, "run integration tests")
 
 func TestSSH(t *testing.T) {
 	if !*integration {
 		t.Skip()
 	}
 
-	for _, tt := range sshTests {
-		got, err := getHostname(tt.hostname)
+	sshTests := []struct {
+		hostname string
+	}{
+		{"bastion"},
+		{"server"},
+	}
+
+	t.Run("Test without ssh-agent", func(t *testing.T) {
+		for _, tt := range sshTests {
+			got, err := getHostname(tt.hostname, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := fmt.Sprintf("%s\n", tt.hostname)
+			if got != want {
+				t.Fatalf("want = %#v, got = %#v", want, got)
+			}
+		}
+	})
+
+	t.Run("Test using ssh-agent", func(t *testing.T) {
+		err := startOpenSSHAgent(t)
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := fmt.Sprintf("%s\n", tt.hostname)
-		if got != want {
-			t.Fatalf("want = %#v, got = %#v", want, got)
+		for _, tt := range sshTests {
+			got, err := getHostname(tt.hostname, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := fmt.Sprintf("%s\n", tt.hostname)
+			if got != want {
+				t.Fatalf("want = %#v, got = %#v", want, got)
+			}
 		}
-	}
 
-	err := startOpenSSHAgent(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, tt := range sshTests {
-		got, err := getHostname(tt.hostname)
+		err = addTestKey(t)
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := fmt.Sprintf("%s\n", tt.hostname)
-		if got != want {
-			t.Fatalf("want = %#v, got = %#v", want, got)
+
+		for _, tt := range sshTests {
+			got, err := getHostname(tt.hostname, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := fmt.Sprintf("%s\n", tt.hostname)
+			if got != want {
+				t.Fatalf("want = %#v, got = %#v", want, got)
+			}
 		}
-	}
 
-	err = addTestKey(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, tt := range sshTests {
-		got, err := getHostname(tt.hostname)
+		err = killOpenSSHAgent(t)
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := fmt.Sprintf("%s\n", tt.hostname)
-		if got != want {
-			t.Fatalf("want = %#v, got = %#v", want, got)
-		}
-	}
-
-	err = killOpenSSHAgent(t)
-	if err != nil {
-		t.Fatal(err)
-	}
+	})
 }
 
-func getHostname(dest string) (string, error) {
-	client, err := NewClient(dest, ConfigPath("./testdata/ssh_config"))
+func getHostname(dest string, useAgent bool) (string, error) {
+	client, err := NewClient(dest, ConfigPath("./testdata/ssh_config"), UseAgent(useAgent))
 	if err != nil {
 		return "", err
 	}
