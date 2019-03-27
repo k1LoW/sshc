@@ -1,6 +1,6 @@
 # sshc [![Build Status](https://travis-ci.org/k1LoW/sshc.svg?branch=master)](https://travis-ci.org/k1LoW/sshc) [![codecov](https://codecov.io/gh/k1LoW/sshc/branch/master/graph/badge.svg)](https://codecov.io/gh/k1LoW/sshc)
 
-`sshc.NewClient()` returns `*ssh.Client` using `~/.ssh/config` and `/etc/ssh/ssh_config`
+`sshc.NewClient()` returns `*ssh.Client` using [ssh_config(5)](https://linux.die.net/man/5/ssh_config)
 
 ## Usage
 
