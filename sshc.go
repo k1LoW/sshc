@@ -1,3 +1,4 @@
+// Package sshc provides sshc.NewClient() that returns *ssh.Client using ssh_config(5)
 package sshc
 
 import (
@@ -24,7 +25,7 @@ var defaultConfigPaths = []string{
 	filepath.Join("/", "etc", "ssh", "ssh_config"),
 }
 
-// Config return SSH Client config. not ssh_config
+// Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
 	configPaths []string
 	host        string
@@ -36,10 +37,10 @@ type Config struct {
 	loader      sync.Once
 }
 
-// Option function change Config
+// Option is the type for change Config.
 type Option func(*Config) error
 
-// User return Option set Config.user
+// User returns Option that set Config.user for override SSH client user.
 func User(u string) Option {
 	return func(c *Config) error {
 		c.user = u
@@ -47,7 +48,7 @@ func User(u string) Option {
 	}
 }
 
-// Port return Option set Config.port
+// Port returns Option that set Config.port for override SSH client port.
 func Port(p int) Option {
 	return func(c *Config) error {
 		c.port = p
@@ -55,7 +56,7 @@ func Port(p int) Option {
 	}
 }
 
-// Passphrase return Option set Config.passphrase
+// Passphrase returns Option that set Config.passphrase for set SSH key passphrase.
 func Passphrase(p []byte) Option {
 	return func(c *Config) error {
 		c.passphrase = p
@@ -63,12 +64,12 @@ func Passphrase(p []byte) Option {
 	}
 }
 
-// ConfigPath is alias of UnshiftConfigPath
+// ConfigPath is alias of UnshiftConfigPath.
 func ConfigPath(p string) Option {
 	return UnshiftConfigPath(p)
 }
 
-// UnshiftConfigPath return Option unshift ssh_config path to Config.configpaths
+// UnshiftConfigPath returns Option that unshift ssh_config path to Config.configpaths.
 func UnshiftConfigPath(p string) Option {
 	return func(c *Config) error {
 		c.configPaths = unique(append([]string{p}, c.configPaths...))
@@ -76,7 +77,7 @@ func UnshiftConfigPath(p string) Option {
 	}
 }
 
-// AppendConfigPath return Option append ssh_config path to Config.configpaths
+// AppendConfigPath returns Option that append ssh_config path to Config.configpaths.
 func AppendConfigPath(p string) Option {
 	return func(c *Config) error {
 		c.configPaths = unique(append(c.configPaths, p))
@@ -84,7 +85,7 @@ func AppendConfigPath(p string) Option {
 	}
 }
 
-// ClearConfigPath return Option clear Config.configpaths
+// ClearConfigPath returns Option thet clear Config.configpaths,
 func ClearConfigPath() Option {
 	return func(c *Config) error {
 		c.configPaths = []string{}
@@ -92,7 +93,7 @@ func ClearConfigPath() Option {
 	}
 }
 
-// UseAgent return Option set Config.useAgent
+// UseAgent returns Option that override Config.useAgent.
 func UseAgent(u bool) Option {
 	return func(c *Config) error {
 		c.useAgent = u
@@ -100,7 +101,7 @@ func UseAgent(u bool) Option {
 	}
 }
 
-// NewClient return *Config
+// NewConfig creates SSH client config.
 func NewConfig(host string, options ...Option) (*Config, error) {
 	var err error
 
@@ -131,7 +132,7 @@ func NewConfig(host string, options ...Option) (*Config, error) {
 	return c, nil
 }
 
-// NewClient return *ssh.Client
+// NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
 func NewClient(host string, options ...Option) (*ssh.Client, error) {
 	c, err := NewConfig(host, options...)
 	if err != nil {
@@ -140,7 +141,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 	return c.DialWithConfig()
 }
 
-// Get return value
+// Get returns Config value.
 func (c *Config) Get(alias, key string) string {
 	homeDir, err := homedir.Dir()
 	if err != nil {
@@ -172,7 +173,7 @@ func (c *Config) Get(alias, key string) string {
 	return ssh_config.Default(key)
 }
 
-// DialWithConfig return *ssh.Client
+// DialWithConfig returns *ssh.Client using Config
 func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	host := c.host
 	user := c.user
