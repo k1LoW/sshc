@@ -13,6 +13,7 @@ install:
   - echo $TRAVIS_GO_VERSION
   - sudo pip install codecov
   - docker-compose up -d
+  - while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
 script:
   - make ci
 after_script:
