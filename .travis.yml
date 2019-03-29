@@ -17,6 +17,7 @@ install:
   - while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
   - sleep 10
 before_script:
+  - ls -la ./testdata/
   - ssh -vvv bastion -F ./testdata/ssh_config hostname
   - ssh -vvv server -F ./testdata/ssh_config hostname
 script:
