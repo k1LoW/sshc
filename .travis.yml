@@ -12,12 +12,12 @@ addons:
 install:
   - echo $TRAVIS_GO_VERSION
   - sudo pip install codecov
-  - chmod 600 ./testdata/id_rsa
-  - chmod 644 ./testdata/id_rsa.pub
+  - sudo chmod 600 ./testdata/id_rsa
+  - sudo chmod 644 ./testdata/id_rsa.pub
   - docker-compose up -d
   - while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
-  - sleep 10
 before_script:
+  - sudo chmod 644 ./testdata/id_rsa.pub
   - ls -la ./testdata/
   - ssh -vvv bastion -F ./testdata/ssh_config hostname
   - ssh -vvv server -F ./testdata/ssh_config hostname
