@@ -12,6 +12,7 @@ addons:
 install:
   - echo $TRAVIS_GO_VERSION
   - sudo pip install codecov
+  - chmod 600 ./testdata/id_rsa
   - docker-compose up -d
   - while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
 before_script:
@@ -21,3 +22,5 @@ script:
   - make ci
 after_script:
   - codecov
+after_failure:
+  - docker-compose logs
