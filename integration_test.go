@@ -23,9 +23,9 @@ func TestSSH(t *testing.T) {
 		{"server"},
 	}
 
-	t.Run("Test without ssh-agent", func(t *testing.T) {
+	t.Run("SSH connection test without ssh-agent", func(t *testing.T) {
 		for _, tt := range sshTests {
-			got, err := getHostname(tt.hostname, false)
+			got, err := getHostname(tt.hostname, false, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -36,13 +36,26 @@ func TestSSH(t *testing.T) {
 		}
 	})
 
-	t.Run("Test using ssh-agent", func(t *testing.T) {
+	t.Run("SSH connection test using sudo", func(t *testing.T) {
+		for _, tt := range sshTests {
+			got, err := getHostname(tt.hostname, false, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := fmt.Sprintf("%s\n", tt.hostname)
+			if got != want {
+				t.Fatalf("want = %#v, got = %#v", want, got)
+			}
+		}
+	})
+
+	t.Run("SSH connection test using ssh-agent", func(t *testing.T) {
 		err := startOpenSSHAgent(t)
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, tt := range sshTests {
-			got, err := getHostname(tt.hostname, true)
+			got, err := getHostname(tt.hostname, true, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -58,7 +71,7 @@ func TestSSH(t *testing.T) {
 		}
 
 		for _, tt := range sshTests {
-			got, err := getHostname(tt.hostname, true)
+			got, err := getHostname(tt.hostname, true, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -75,7 +88,7 @@ func TestSSH(t *testing.T) {
 	})
 }
 
-func getHostname(dest string, useAgent bool) (string, error) {
+func getHostname(dest string, useAgent bool, sudo bool) (string, error) {
 	client, err := NewClient(dest, ConfigPath("./testdata/ssh_config"), UseAgent(useAgent))
 	if err != nil {
 		return "", err
@@ -86,7 +99,15 @@ func getHostname(dest string, useAgent bool) (string, error) {
 
 	var stdout = &bytes.Buffer{}
 	session.Stdout = stdout
-	err = session.Run("hostname")
+	cmd := "hostname"
+
+	if sudo {
+		var stdin = &bytes.Buffer{}
+		session.Stdin = stdin
+		stdin.WriteString("k1low\n")
+		cmd = "sudo -S hostname"
+	}
+	err = session.Run(cmd)
 	if err != nil {
 		return "", err
 	}
