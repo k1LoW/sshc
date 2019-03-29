@@ -13,6 +13,7 @@ install:
   - echo $TRAVIS_GO_VERSION
   - sudo pip install codecov
   - chmod 600 ./testdata/id_rsa
+  - chmod 644 ./testdata/id_rsa.pub
   - docker-compose up -d
   - while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
   - sleep 10
