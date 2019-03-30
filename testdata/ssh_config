@@ -4,7 +4,7 @@ Host *
 
 Host bastion
   HostName 127.0.0.1
-  User root
+  User k1low
   Port 1022
   IdentityFile ./testdata/id_rsa
 
