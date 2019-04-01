@@ -26,6 +26,17 @@ func TestPort(t *testing.T) {
 	}
 }
 
+func TestPassphrase(t *testing.T) {
+	c, err := NewConfig("example.com", Passphrase([]byte("secret")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []byte("secret")
+	if got := c.passphrase; string(got) != string(want) {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+}
+
 func TestConfigPath(t *testing.T) {
 	c, err := NewConfig("example.com", ConfigPath("/path/to/ssh_config"))
 	if err != nil {
@@ -38,6 +49,23 @@ func TestConfigPath(t *testing.T) {
 	}
 
 	want2 := "/path/to/ssh_config"
+	if got := c.configPaths[0]; got != want2 {
+		t.Fatalf("want = %#v, got = %#v", want2, got)
+	}
+}
+
+func TestAppendConfigPath(t *testing.T) {
+	c, err := NewConfig("example.com", AppendConfigPath("/path/to/ssh_config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 3
+	if got := len(c.configPaths); got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+
+	want2 := "~/.ssh/config"
 	if got := c.configPaths[0]; got != want2 {
 		t.Fatalf("want = %#v, got = %#v", want2, got)
 	}
