@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
@@ -177,17 +179,38 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		proxyCommand = strings.Replace(proxyCommand, "%p", port, -1)
 		proxyCommand = strings.Replace(proxyCommand, "%r", user, -1)
 		cmd := exec.Command("sh", "-c", proxyCommand)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
 		cmd.Stdout = server
 		cmd.Stderr = os.Stderr
+
 		if err := cmd.Start(); err != nil {
 			return nil, err
 		}
-		conn, incomingChannels, incomingRequests, err := ssh.NewClientConn(client, addr, sshConfig)
-		if err != nil {
-			return nil, err
+
+		done := make(chan *ssh.Client)
+		errchan := make(chan error)
+		go func() {
+			conn, incomingChannels, incomingRequests, err := ssh.NewClientConn(client, addr, sshConfig)
+			if err != nil {
+				errchan <- err
+				return
+			}
+			done <- ssh.NewClient(conn, incomingChannels, incomingRequests)
+		}()
+
+		for {
+			select {
+			case err := <-errchan:
+				return nil, err
+			case <-time.After(30 * time.Second):
+				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+				return nil, fmt.Errorf("proxy command timeout(30sec)")
+			case client := <-done:
+				return client, nil
+			}
 		}
-		return ssh.NewClient(conn, incomingChannels, incomingRequests), nil
+
 	}
 	return ssh.Dial("tcp", addr, sshConfig)
 }
