@@ -59,6 +59,7 @@ Available options
 - Passphrase
 - ConfigPath ( Default is `~/.ssh/config` and `/etc/ssh/ssh_config` )
 - UseAgent ( Default is `true` )
+- Knownhosts ( Default is empty )
 
 ## References
 
