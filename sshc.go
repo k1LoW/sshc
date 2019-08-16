@@ -19,6 +19,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -37,6 +38,7 @@ type Config struct {
 	useAgent    bool
 	configs     []*ssh_config.Config
 	loader      sync.Once
+	knownhosts  []string
 }
 
 // NewConfig creates SSH client config.
@@ -91,7 +93,7 @@ func (c *Config) Get(alias, key string) string {
 			if _, err := os.Lstat(cPath); err != nil {
 				continue
 			}
-			f, err := os.Open(cPath)
+			f, err := os.Open(filepath.Clean(cPath))
 			if err != nil {
 				continue
 			}
@@ -127,7 +129,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := ioutil.ReadFile(keyPath)
+	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return nil, err
 	}
@@ -166,10 +168,15 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		auth = append(auth, ssh.PublicKeys(signer))
 	}
 
+	cb, err := c.hostKeyCallback()
+	if err != nil {
+		return nil, err
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            user,
 		Auth:            auth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // FIXME
+		HostKeyCallback: cb,
 	}
 
 	proxyCommand := c.Get(host, "ProxyCommand")
@@ -178,7 +185,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		proxyCommand = c.unescapeCharacters(proxyCommand)
 		proxyCommand = strings.Replace(proxyCommand, "%p", port, -1)
 		proxyCommand = strings.Replace(proxyCommand, "%r", user, -1)
-		cmd := exec.Command("sh", "-c", proxyCommand)
+		cmd := exec.Command("sh", "-c", proxyCommand) // #nosec
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
 		cmd.Stdout = server
@@ -204,7 +211,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 			case err := <-errchan:
 				return nil, err
 			case <-time.After(30 * time.Second):
-				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+				_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 				return nil, fmt.Errorf("proxy command timeout(30sec)")
 			case client := <-done:
 				return client, nil
@@ -246,6 +253,19 @@ func (c *Config) getIdentityFile() (string, error) {
 		}
 	}
 	return strings.Replace(keyPath, "~", homeDir, 1), nil
+}
+
+func (c *Config) hostKeyCallback() (ssh.HostKeyCallback, error) {
+	if len(c.knownhosts) > 0 {
+		hostKeyCallback, err := knownhosts.New(c.knownhosts...)
+		if err != nil {
+			return nil, err
+		}
+		return hostKeyCallback, nil
+	}
+	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		return nil
+	}, nil
 }
 
 func unique(s []string) []string {
