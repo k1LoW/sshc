@@ -4,7 +4,7 @@ services:
     image: k1low/sshd
     hostname: bastion
     ports:
-      - "1022:22"
+      - "9022:22"
     volumes:
       - ./testdata/id_rsa.pub:/etc/authorized_keys/k1low
       - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
