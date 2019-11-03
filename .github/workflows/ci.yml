@@ -1,0 +1,43 @@
+name: build
+
+on: push
+
+jobs:
+  job-test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go_version: [1.12, 1.13]
+    steps:
+      - name: Set up Go ${{ matrix.go_version }}
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go_version }}
+
+      - name: Install codecov
+        run: sudo pip install codecov
+
+      - name: Check out source code
+        uses: actions/checkout@v1
+
+      - name: Start SSH server
+        run: |
+            sudo chmod 600 ./testdata/id_rsa
+            sudo chmod 644 ./testdata/id_rsa.pub
+            docker-compose up -d
+            while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
+            sudo chmod 600 ./testdata/id_rsa
+            sudo chmod 644 ./testdata/id_rsa.pub
+            ssh -vvv bastion -F ./testdata/ssh_config hostname
+            ssh -vvv server -F ./testdata/ssh_config hostname
+
+      - name: Test
+        run: env PATH=`go env GOPATH`/bin:$PATH make ci
+        env:
+          GOPROXY: "https://proxy.golang.org"
+
+      - name: Run codecov
+        run: codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
