@@ -88,6 +88,23 @@ func TestClearConfigPath(t *testing.T) {
 	}
 }
 
+func TestKnownhosts(t *testing.T) {
+	c, err := NewConfig("example.com", Knownhosts("/path/to/.ssh/known_hosts", "/root/.ssh/known_hosts"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 2
+	if got := len(c.knownhosts); got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+
+	want2 := "/path/to/.ssh/known_hosts"
+	if got := c.knownhosts[0]; got != want2 {
+		t.Fatalf("want = %#v, got = %#v", want2, got)
+	}
+}
+
 func TestGet(t *testing.T) {
 	host := "server"
 	c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/ssh_config"))

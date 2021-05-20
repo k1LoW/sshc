@@ -63,3 +63,11 @@ func UseAgent(u bool) Option {
 		return nil
 	}
 }
+
+// Knownhosts returns Option that override Config.knownhosts.
+func Knownhosts(files ...string) Option {
+	return func(c *Config) error {
+		c.knownhosts = files
+		return nil
+	}
+}
