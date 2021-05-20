@@ -1,6 +1,8 @@
 name: build
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   job-test:
@@ -8,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go_version: [1.12, 1.13]
+        go_version: [1.15, 1.16]
     steps:
       - name: Set up Go ${{ matrix.go_version }}
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go_version }}
 
@@ -19,7 +21,7 @@ jobs:
         run: sudo pip install codecov
 
       - name: Check out source code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Start SSH server
         run: |
@@ -33,9 +35,7 @@ jobs:
             ssh -vvv server -F ./testdata/ssh_config hostname
 
       - name: Test
-        run: env PATH=`go env GOPATH`/bin:$PATH make ci
-        env:
-          GOPROXY: "https://proxy.golang.org"
+        run: make ci
 
       - name: Run codecov
         run: codecov
