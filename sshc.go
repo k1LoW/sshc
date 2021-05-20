@@ -2,12 +2,14 @@
 package sshc
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -180,6 +182,16 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	}
 
 	proxyCommand := c.Get(host, "ProxyCommand")
+	proxyJump := c.Get(host, "ProxyJump")
+
+	if proxyJump != "" {
+		parsedProxyJump, err := c.parseProxyJump(proxyJump)
+		if err != nil {
+			return nil, err
+		}
+		proxyCommand = parsedProxyJump
+	}
+
 	if proxyCommand != "" {
 		client, server := net.Pipe()
 		proxyCommand = c.unescapeCharacters(proxyCommand)
@@ -292,4 +304,23 @@ func newSSHAgentClient() (agent.ExtendedAgent, error) {
 
 func sshAuthSockExists() bool {
 	return os.Getenv("SSH_AUTH_SOCK") != ""
+}
+
+func (c *Config) parseProxyJump(text string) (string, error) {
+	proxyPort := "22"
+	if strings.Contains(text, ":") {
+		var portReg = regexp.MustCompile(`.+:(?P<port>[0-9]+)`)
+		match := portReg.FindAllStringSubmatch(text, -1)
+		if len(match) == 0 {
+			return "", errors.New("proxyJump is wrong format")
+		}
+
+		for i, name := range portReg.SubexpNames() {
+			if i != 0 && name == "port" {
+				proxyPort = match[0][i]
+			}
+		}
+		text = text[:strings.Index(text, ":")]
+	}
+	return fmt.Sprintf("ssh -l %%r -W %%h:%%p  %s -p %s", c.unescapeCharacters(text), proxyPort), nil
 }
