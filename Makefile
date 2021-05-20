@@ -2,13 +2,10 @@ export GO111MODULE=on
 
 default: test
 
-ci: depsdev integration sec
+ci: depsdev test integration sec
 
 test:
 	go test -v ./... -coverprofile=coverage.txt -covermode=count
-
-lint:
-	golint ./...
 
 sec:
 	gosec ./...
@@ -18,7 +15,6 @@ integration:
 	go test -v ./... -integration -coverprofile=coverage.txt -covermode=count
 
 depsdev:
-	go get golang.org/x/lint/golint
 	go get github.com/linyows/git-semv/cmd/git-semv
 	go get github.com/Songmu/ghch/cmd/ghch
 	go get github.com/Songmu/gocredits/cmd/gocredits
