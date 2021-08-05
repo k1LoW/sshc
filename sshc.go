@@ -184,7 +184,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	proxyCommand := c.Get(host, "ProxyCommand")
 	proxyJump := c.Get(host, "ProxyJump")
 
-	if proxyJump != "" {
+	if proxyCommand == "" && proxyJump != "" {
 		parsedProxyJump, err := c.parseProxyJump(proxyJump)
 		if err != nil {
 			return nil, err
@@ -204,7 +204,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Start(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("proxy command:%s error:%s", proxyCommand, err)
 		}
 
 		done := make(chan *ssh.Client)
