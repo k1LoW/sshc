@@ -31,8 +31,8 @@ jobs:
             while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
             sudo chmod 600 ./testdata/id_rsa
             sudo chmod 644 ./testdata/id_rsa.pub
-            ssh -vvv bastion -F ./testdata/ssh_config hostname
-            ssh -vvv server -F ./testdata/ssh_config hostname
+            ssh -vvv bastion -F ./testdata/simple/ssh_config hostname
+            ssh -vvv server -F ./testdata/simple/ssh_config hostname
 
       - name: Test
         run: make ci

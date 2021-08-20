@@ -13,6 +13,6 @@ Host server
   User root
   Port 22
   IdentityFile ./testdata/id_rsa
-  ProxyCommand ssh -W %h:%p bastion -F ./testdata/ssh_config
+  ProxyCommand ssh -W %h:%p bastion -F ./testdata/simple/ssh_config
 
 Host simple
