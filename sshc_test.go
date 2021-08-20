@@ -28,7 +28,7 @@ func TestPort(t *testing.T) {
 	{
 		want := 12345
 		host := "simple"
-		c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/ssh_config"), Port(want))
+		c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"), Port(want))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,7 +120,7 @@ func TestKnownhosts(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	host := "server"
-	c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/ssh_config"))
+	c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"))
 	if err != nil {
 		t.Fatal(err)
 	}
