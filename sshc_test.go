@@ -24,6 +24,19 @@ func TestPort(t *testing.T) {
 	if got := c.port; got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
+
+	{
+		want := 12345
+		host := "simple"
+		c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/ssh_config"), Port(want))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got := c.port; got != want {
+			t.Fatalf("want = %#v, got = %#v", want, got)
+		}
+	}
 }
 
 func TestPassphrase(t *testing.T) {

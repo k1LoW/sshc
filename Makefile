@@ -5,14 +5,14 @@ default: test
 ci: depsdev test integration sec
 
 test:
-	go test -v ./... -coverprofile=coverage.txt -covermode=count
+	go test -v ./... -coverprofile=coverage.out -covermode=count
 
 sec:
 	gosec ./...
 
 integration:
 	chmod 600 ./testdata/id_rsa
-	go test -v ./... -integration -coverprofile=coverage.txt -covermode=count
+	go test -v ./... -integration -coverprofile=coverage.out -covermode=count
 
 depsdev:
 	go get github.com/linyows/git-semv/cmd/git-semv
