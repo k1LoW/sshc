@@ -46,7 +46,7 @@ func main() {
 }
 ```
 
-## sshc.Option
+### sshc.Option
 
 ``` go
 client, err := sshc.NewClient("myhost", User("k1low"), Port(1022))
@@ -60,6 +60,15 @@ Available options
 - ConfigPath ( Default is `~/.ssh/config` and `/etc/ssh/ssh_config` )
 - UseAgent ( Default is `true` )
 - Knownhosts ( Default is empty )
+
+## Supported ssh_config keywords
+
+- Hostname
+- Port
+- User
+- IdentityFile
+- ProxyCommand
+- ProxyJump
 
 ## References
 
