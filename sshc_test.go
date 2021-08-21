@@ -119,15 +119,45 @@ func TestKnownhosts(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	host := "server"
-	c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"))
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		host             string
+		wantHostname     string
+		wantPort         string
+		wantUser         string
+		wantIdentityFile string
+	}{
+		{
+			"server",
+			"172.30.0.3",
+			"22",
+			"root",
+			"./testdata/id_rsa",
+		},
+		{
+			"bastion",
+			"127.0.0.1",
+			"9022",
+			"k1low",
+			"./testdata/id_rsa",
+		},
 	}
-
-	want := "172.30.0.3"
-	if got := c.Get(host, "Hostname"); got != want {
-		t.Fatalf("want = %#v, got = %#v", want, got)
+	for _, tt := range tests {
+		c, err := NewConfig(tt.host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := c.Get(tt.host, "Hostname"); got != tt.wantHostname {
+			t.Errorf("want = %#v, got = %#v", tt.wantHostname, got)
+		}
+		if got := c.Get(tt.host, "Port"); got != tt.wantPort {
+			t.Errorf("want = %#v, got = %#v", tt.wantPort, got)
+		}
+		if got := c.Get(tt.host, "User"); got != tt.wantUser {
+			t.Errorf("want = %#v, got = %#v", tt.wantUser, got)
+		}
+		if got := c.Get(tt.host, "IdentityFile"); got != tt.wantIdentityFile {
+			t.Errorf("want = %#v, got = %#v", tt.wantIdentityFile, got)
+		}
 	}
 }
 
