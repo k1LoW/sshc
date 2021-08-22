@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -109,16 +108,16 @@ func (c *Config) Get(alias, key string) string {
 			buf := new(bytes.Buffer)
 			s := bufio.NewScanner(f)
 			for s.Scan() {
-				line := s.Text()
+				line := s.Bytes()
 
 				// Replace include path
-				if includeRelRe.MatchString(line) {
-					line = includeRelRe.ReplaceAllString(line, fmt.Sprintf("Include %s$2", os.Getenv("HOME")))
-				} else if includeRelRe2.MatchString(line) {
-					line = includeRelRe2.ReplaceAllString(line, fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME")))
+				if includeRelRe.Match(line) {
+					line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", os.Getenv("HOME"))))
+				} else if includeRelRe2.Match(line) {
+					line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME"))))
 				}
 
-				if _, err := io.WriteString(buf, line+"\n"); err != nil {
+				if _, err := buf.Write(append(line, []byte("\n")...)); err != nil {
 					panic(err)
 				}
 			}
