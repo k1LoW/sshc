@@ -80,7 +80,12 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc := &DialConfig{
-		User: c.Get(host, "User"),
+		User:         c.Get(host, "User"),
+		ProxyCommand: c.Get(host, "ProxyCommand"),
+		ProxyJump:    c.Get(host, "ProxyJump"),
+		Passphrase:   c.passphrase,
+		Knownhosts:   c.knownhosts,
+		UseAgent:     c.useAgent,
 	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
@@ -92,13 +97,11 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.Port = port
-	identityFile, err := c.getIdentityFile(host)
+	keyPath, err := c.getIdentityFile(host)
 	if err != nil {
 		return nil, err
 	}
-	dc.IdentityFile = identityFile
-	dc.ProxyCommand = c.Get(host, "ProxyCommand")
-	dc.ProxyJump = c.Get(host, "ProxyJump")
+	dc.IdentityFile = keyPath
 
 	return Dial(dc)
 }
