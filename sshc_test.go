@@ -1,6 +1,8 @@
 package sshc
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -119,44 +121,59 @@ func TestKnownhosts(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	tests := []struct {
-		host             string
-		wantHostname     string
-		wantPort         string
-		wantUser         string
-		wantIdentityFile string
-	}{
-		{
-			"server",
-			"172.30.0.3",
-			"22",
-			"root",
-			"./testdata/id_rsa",
-		},
-		{
-			"bastion",
-			"127.0.0.1",
-			"9022",
-			"k1low",
-			"./testdata/id_rsa",
-		},
+	homes := []string{
+		"simple",
+		"separate",
 	}
-	for _, tt := range tests {
-		c, err := NewConfig(tt.host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"))
-		if err != nil {
-			t.Fatal(err)
+	for _, h := range homes {
+		t.Setenv("HOME", testHome(t, h))
+		p := filepath.Join("./testdata", h, ".ssh", "config")
+		tests := []struct {
+			host             string
+			wantHostname     string
+			wantPort         string
+			wantUser         string
+			wantIdentityFile string
+		}{
+			{
+				"server",
+				"172.30.0.3",
+				"22",
+				"root",
+				"~/.ssh/id_rsa",
+			},
+			{
+				"bastion",
+				"127.0.0.1",
+				"9022",
+				"k1low",
+				"~/.ssh/id_rsa",
+			},
+			{
+				"simple",
+				"",
+				"22",
+				"",
+				"~/.ssh/identity",
+			},
 		}
-		if got := c.Get(tt.host, "Hostname"); got != tt.wantHostname {
-			t.Errorf("want = %#v, got = %#v", tt.wantHostname, got)
-		}
-		if got := c.Get(tt.host, "Port"); got != tt.wantPort {
-			t.Errorf("want = %#v, got = %#v", tt.wantPort, got)
-		}
-		if got := c.Get(tt.host, "User"); got != tt.wantUser {
-			t.Errorf("want = %#v, got = %#v", tt.wantUser, got)
-		}
-		if got := c.Get(tt.host, "IdentityFile"); got != tt.wantIdentityFile {
-			t.Errorf("want = %#v, got = %#v", tt.wantIdentityFile, got)
+		for _, tt := range tests {
+			c, err := NewConfig(tt.host, ClearConfigPath(), ConfigPath(p))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := c.Get(tt.host, "Hostname"); got != tt.wantHostname {
+				t.Errorf("want = %#v, got = %#v", tt.wantHostname, got)
+			}
+			if got := c.Get(tt.host, "Port"); got != tt.wantPort {
+				t.Errorf("want = %#v, got = %#v", tt.wantPort, got)
+			}
+			if got := c.Get(tt.host, "User"); got != tt.wantUser {
+				t.Errorf("want = %#v, got = %#v", tt.wantUser, got)
+			}
+			if got := c.Get(tt.host, "IdentityFile"); got != tt.wantIdentityFile {
+				t.Errorf("want = %#v, got = %#v", tt.wantIdentityFile, got)
+			}
 		}
 	}
 }
@@ -205,4 +222,17 @@ func TestConfig_parseProxyJump(t *testing.T) {
 			}
 		})
 	}
+}
+
+func testHome(t *testing.T, path string) string {
+	t.Helper()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := filepath.Abs(filepath.Join(wd, "testdata", path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
 }

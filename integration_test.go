@@ -89,7 +89,7 @@ func TestSSH(t *testing.T) {
 }
 
 func getHostname(dest string, useAgent bool, sudo bool) (string, error) {
-	client, err := NewClient(dest, ConfigPath("./testdata/simple/ssh_config"), UseAgent(useAgent))
+	client, err := NewClient(dest, ConfigPath("./testdata/ssh_config"), UseAgent(useAgent))
 	if err != nil {
 		return "", err
 	}

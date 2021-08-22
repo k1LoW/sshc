@@ -1,7 +1,3 @@
-Host *
-  StrictHostKeyChecking no
-  UserKnownHostsFile=/dev/null
-
 Host bastion
   HostName 127.0.0.1
   User k1low
@@ -13,6 +9,10 @@ Host server
   User root
   Port 22
   IdentityFile ./testdata/id_rsa
-  ProxyCommand ssh -W %h:%p bastion -F ./testdata/simple/ssh_config
+  ProxyCommand ssh -W %h:%p bastion -F ./testdata/ssh_config
 
 Host simple
+
+Host *
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
