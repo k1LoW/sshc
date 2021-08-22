@@ -2,8 +2,6 @@
 package sshc
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -17,31 +15,11 @@ import (
 	"time"
 
 	"github.com/ScaleFT/sshkeys"
-	"github.com/kevinburke/ssh_config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
 	"golang.org/x/term"
 )
-
-var defaultConfigPaths = []string{
-	filepath.Join("~", ".ssh", "config"),
-	filepath.Join("/", "etc", "ssh", "ssh_config"),
-}
-
-var includeRelRe = regexp.MustCompile(`^(Include\s+~)(.+)$`)
-var includeRelRe2 = regexp.MustCompile(`^(Include\s+)([^~/].+)$`)
-
-// Config is the type for the SSH Client config. not ssh_config.
-type Config struct {
-	configPaths []string
-	user        string
-	port        int
-	passphrase  []byte
-	useAgent    bool
-	configs     []*ssh_config.Config
-	knownhosts  []string
-}
 
 type DialConfig struct {
 	Hostname     string
@@ -53,62 +31,6 @@ type DialConfig struct {
 	IdentityFile string
 	ProxyCommand string
 	ProxyJump    string
-}
-
-// NewConfig creates SSH client config.
-func NewConfig(options ...Option) (*Config, error) {
-	var err error
-	c := &Config{
-		configPaths: defaultConfigPaths,
-		useAgent:    true, // Default is true
-	}
-	for _, option := range options {
-		err = option(c)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, p := range c.configPaths {
-		cPath := strings.Replace(p, "~", homeDir, 1)
-		if _, err := os.Lstat(cPath); err != nil {
-			continue
-		}
-		f, err := os.Open(filepath.Clean(cPath))
-		if err != nil {
-			return nil, err
-		}
-
-		buf := new(bytes.Buffer)
-		s := bufio.NewScanner(f)
-		for s.Scan() {
-			line := s.Bytes()
-
-			// Replace include path
-			if includeRelRe.Match(line) {
-				line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", os.Getenv("HOME"))))
-			} else if includeRelRe2.Match(line) {
-				line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME"))))
-			}
-
-			if _, err := buf.Write(append(line, []byte("\n")...)); err != nil {
-				return nil, err
-			}
-		}
-
-		cfg, err := ssh_config.Decode(buf)
-		if err != nil {
-			return nil, err
-		}
-		c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
-	}
-
-	return c, nil
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -142,25 +64,6 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 	dc.IdentityFile = keyPath
 
 	return Dial(dc)
-}
-
-// Get returns Config value.
-func (c *Config) Get(host, key string) string {
-	// Return the value overridden by option
-	switch {
-	case key == "User" && c.user != "":
-		return c.user
-	case key == "Port" && c.port != 0:
-		return strconv.Itoa(c.port)
-	}
-
-	for _, cfg := range c.configs {
-		val, err := cfg.Get(host, key)
-		if err != nil || val != "" {
-			return val
-		}
-	}
-	return ssh_config.Default(key)
 }
 
 // Dial returns *ssh.Client using Config
@@ -267,60 +170,6 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 	return ssh.Dial("tcp", addr, sshConfig)
 }
 
-func (c *Config) getHostname(host string) (string, error) {
-	h := c.Get(host, "Hostname")
-	if h == "" {
-		return host, nil
-	}
-	return h, nil
-}
-
-func (c *Config) getIdentityFile(host string) (string, error) {
-	user := c.Get(host, "User")
-	port := c.Get(host, "Port")
-	hostname, err := c.getHostname(host)
-	if err != nil {
-		return "", err
-	}
-	keyPath := c.Get(host, "IdentityFile")
-	keyPath = unescapeCharacters(keyPath, user, port, hostname)
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	if keyPath == "~/.ssh/identity" {
-		if _, err := os.Lstat(strings.Replace(keyPath, "~", homeDir, 1)); err != nil {
-			keyPath = "~/.ssh/id_rsa"
-		}
-	}
-	return strings.Replace(keyPath, "~", homeDir, 1), nil
-}
-
-func hostKeyCallback(files []string) (ssh.HostKeyCallback, error) {
-	if len(files) > 0 {
-		hostKeyCallback, err := knownhosts.New(files...)
-		if err != nil {
-			return nil, err
-		}
-		return hostKeyCallback, nil
-	}
-	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-		return nil
-	}, nil
-}
-
-func unique(s []string) []string {
-	keys := make(map[string]bool)
-	l := []string{}
-	for _, e := range s {
-		if _, v := keys[e]; !v {
-			keys[e] = true
-			l = append(l, e)
-		}
-	}
-	return l
-}
-
 func newSSHAgentClient() (agent.ExtendedAgent, error) {
 	socket := os.Getenv("SSH_AUTH_SOCK")
 	conn, err := net.Dial("unix", socket)
@@ -359,4 +208,17 @@ func unescapeCharacters(v, user, port, hostname string) string {
 	v = strings.Replace(v, "%p", port, -1)
 	v = strings.Replace(v, "%r", user, -1)
 	return v
+}
+
+func hostKeyCallback(files []string) (ssh.HostKeyCallback, error) {
+	if len(files) > 0 {
+		hostKeyCallback, err := knownhosts.New(files...)
+		if err != nil {
+			return nil, err
+		}
+		return hostKeyCallback, nil
+	}
+	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		return nil
+	}, nil
 }
