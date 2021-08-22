@@ -20,7 +20,6 @@ import (
 
 	"github.com/ScaleFT/sshkeys"
 	"github.com/kevinburke/ssh_config"
-	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
@@ -107,7 +106,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 
 // Get returns Config value.
 func (c *Config) Get(host, key string) string {
-	homeDir, err := homedir.Dir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
@@ -291,7 +290,7 @@ func (c *Config) getIdentityFile(host string) (string, error) {
 	}
 	keyPath := c.Get(host, "IdentityFile")
 	keyPath = unescapeCharacters(keyPath, user, port, hostname)
-	homeDir, err := homedir.Dir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
