@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -41,7 +40,6 @@ type Config struct {
 	passphrase  []byte
 	useAgent    bool
 	configs     []*ssh_config.Config
-	loader      sync.Once
 	knownhosts  []string
 }
 
@@ -70,6 +68,46 @@ func NewConfig(options ...Option) (*Config, error) {
 			return nil, err
 		}
 	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range c.configPaths {
+		cPath := strings.Replace(p, "~", homeDir, 1)
+		if _, err := os.Lstat(cPath); err != nil {
+			continue
+		}
+		f, err := os.Open(filepath.Clean(cPath))
+		if err != nil {
+			return nil, err
+		}
+
+		buf := new(bytes.Buffer)
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			line := s.Bytes()
+
+			// Replace include path
+			if includeRelRe.Match(line) {
+				line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", os.Getenv("HOME"))))
+			} else if includeRelRe2.Match(line) {
+				line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME"))))
+			}
+
+			if _, err := buf.Write(append(line, []byte("\n")...)); err != nil {
+				return nil, err
+			}
+		}
+
+		cfg, err := ssh_config.Decode(buf)
+		if err != nil {
+			return nil, err
+		}
+		c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
+	}
+
 	return c, nil
 }
 
@@ -108,47 +146,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 
 // Get returns Config value.
 func (c *Config) Get(host, key string) string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	c.loader.Do(func() {
-		for _, p := range c.configPaths {
-			cPath := strings.Replace(p, "~", homeDir, 1)
-			if _, err := os.Lstat(cPath); err != nil {
-				continue
-			}
-			f, err := os.Open(filepath.Clean(cPath))
-			if err != nil {
-				continue
-			}
-
-			buf := new(bytes.Buffer)
-			s := bufio.NewScanner(f)
-			for s.Scan() {
-				line := s.Bytes()
-
-				// Replace include path
-				if includeRelRe.Match(line) {
-					line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", os.Getenv("HOME"))))
-				} else if includeRelRe2.Match(line) {
-					line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME"))))
-				}
-
-				if _, err := buf.Write(append(line, []byte("\n")...)); err != nil {
-					panic(err)
-				}
-			}
-
-			cfg, err := ssh_config.Decode(buf)
-			if err != nil {
-				continue
-			}
-			c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
-		}
-	})
-
-	// option setting
+	// Return the value overridden by option
 	switch {
 	case key == "User" && c.user != "":
 		return c.user
