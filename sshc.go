@@ -21,7 +21,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var defaultConfigPaths = []string{
@@ -176,7 +176,7 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 	if err != nil {
 		// passphrase
 		fmt.Printf("Enter passphrase for key '%s': ", dc.IdentityFile)
-		passPhrase, err := terminal.ReadPassword(0)
+		passPhrase, err := term.ReadPassword(0)
 		if err != nil {
 			fmt.Println("")
 			return nil, err
