@@ -121,11 +121,13 @@ func TestKnownhosts(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	t.Setenv("HOME", testHome(t, "simple"))
-	confPaths := []string{
-		"./testdata/simple/.ssh/config",
+	homes := []string{
+		"simple",
+		"separate",
 	}
-	for _, p := range confPaths {
+	for _, h := range homes {
+		t.Setenv("HOME", testHome(t, h))
+		p := filepath.Join("./testdata", h, ".ssh", "config")
 		tests := []struct {
 			host             string
 			wantHostname     string

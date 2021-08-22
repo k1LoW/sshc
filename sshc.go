@@ -2,8 +2,11 @@
 package sshc
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -29,6 +32,9 @@ var defaultConfigPaths = []string{
 	filepath.Join("~", ".ssh", "config"),
 	filepath.Join("/", "etc", "ssh", "ssh_config"),
 }
+
+var includeRelRe = regexp.MustCompile(`^(Include\s+~)(.+)$`)
+var includeRelRe2 = regexp.MustCompile(`^(Include\s+)([^~/].+)$`)
 
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
@@ -99,7 +105,25 @@ func (c *Config) Get(alias, key string) string {
 			if err != nil {
 				continue
 			}
-			cfg, err := ssh_config.Decode(f)
+
+			buf := new(bytes.Buffer)
+			s := bufio.NewScanner(f)
+			for s.Scan() {
+				line := s.Text()
+
+				// Replace include path
+				if includeRelRe.MatchString(line) {
+					line = includeRelRe.ReplaceAllString(line, fmt.Sprintf("Include %s$2", os.Getenv("HOME")))
+				} else if includeRelRe2.MatchString(line) {
+					line = includeRelRe2.ReplaceAllString(line, fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME")))
+				}
+
+				if _, err := io.WriteString(buf, line+"\n"); err != nil {
+					panic(err)
+				}
+			}
+
+			cfg, err := ssh_config.Decode(buf)
 			if err != nil {
 				continue
 			}
