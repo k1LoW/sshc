@@ -38,7 +38,6 @@ var includeRelRe2 = regexp.MustCompile(`^(Include\s+)([^~/].+)$`)
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
 	configPaths []string
-	host        string
 	user        string
 	port        int
 	passphrase  []byte
@@ -48,28 +47,25 @@ type Config struct {
 	knownhosts  []string
 }
 
-// NewConfig creates SSH client config.
-func NewConfig(host string, options ...Option) (*Config, error) {
-	var err error
+type DialConfig struct {
+	Hostname     string
+	User         string
+	Port         int
+	Passphrase   []byte
+	UseAgent     bool
+	Knownhosts   []string
+	IdentityFile string
+	ProxyCommand string
+	ProxyJump    string
+}
 
+// NewConfig creates SSH client config.
+func NewConfig(options ...Option) (*Config, error) {
+	var err error
 	c := &Config{
 		configPaths: defaultConfigPaths,
-		host:        host,
 		useAgent:    true, // Default is true
 	}
-	for _, option := range options {
-		err = option(c)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	c.user = c.Get(host, "User")
-	c.port, err = strconv.Atoi(c.Get(host, "Port"))
-	if err != nil {
-		return nil, err
-	}
-
 	for _, option := range options {
 		err = option(c)
 		if err != nil {
@@ -81,15 +77,36 @@ func NewConfig(host string, options ...Option) (*Config, error) {
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
 func NewClient(host string, options ...Option) (*ssh.Client, error) {
-	c, err := NewConfig(host, options...)
+	c, err := NewConfig(options...)
 	if err != nil {
 		return nil, err
 	}
-	return c.DialWithConfig()
+	dc := &DialConfig{
+		User: c.Get(host, "User"),
+	}
+	hostname, err := c.getHostname(host)
+	if err != nil {
+		return nil, err
+	}
+	dc.Hostname = hostname
+	port, err := strconv.Atoi(c.Get(host, "Port"))
+	if err != nil {
+		return nil, err
+	}
+	dc.Port = port
+	identityFile, err := c.getIdentityFile(host)
+	if err != nil {
+		return nil, err
+	}
+	dc.IdentityFile = identityFile
+	dc.ProxyCommand = c.Get(host, "ProxyCommand")
+	dc.ProxyJump = c.Get(host, "ProxyJump")
+
+	return Dial(dc)
 }
 
 // Get returns Config value.
-func (c *Config) Get(alias, key string) string {
+func (c *Config) Get(host, key string) string {
 	homeDir, err := homedir.Dir()
 	if err != nil {
 		return ""
@@ -129,8 +146,17 @@ func (c *Config) Get(alias, key string) string {
 			c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
 		}
 	})
+
+	// option setting
+	switch {
+	case key == "User" && c.user != "":
+		return c.user
+	case key == "Port" && c.port != 0:
+		return strconv.Itoa(c.port)
+	}
+
 	for _, cfg := range c.configs {
-		val, err := cfg.Get(alias, key)
+		val, err := cfg.Get(host, key)
 		if err != nil || val != "" {
 			return val
 		}
@@ -138,27 +164,20 @@ func (c *Config) Get(alias, key string) string {
 	return ssh_config.Default(key)
 }
 
-// DialWithConfig returns *ssh.Client using Config
-func (c *Config) DialWithConfig() (*ssh.Client, error) {
-	host := c.host
-	user := c.user
-	port := strconv.Itoa(c.port)
-	hostname, err := c.getHostname()
-	if err != nil {
-		return nil, err
-	}
-	addr := hostname + ":" + port
+// Dial returns *ssh.Client using Config
+func Dial(dc *DialConfig) (*ssh.Client, error) {
+	user := dc.User
+	port := dc.Port
+	hostname := dc.Hostname
+	keyPath := dc.IdentityFile
+	addr := fmt.Sprintf("%s:%d", hostname, port)
 
 	auth := []ssh.AuthMethod{}
-	keyPath, err := c.getIdentityFile()
-	if err != nil {
-		return nil, err
-	}
 	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return nil, err
 	}
-	signer, err := sshkeys.ParseEncryptedPrivateKey(key, c.passphrase)
+	signer, err := sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
 	if err != nil {
 		// passphrase
 		fmt.Printf("Enter passphrase for key '%s': ", keyPath)
@@ -175,7 +194,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		fmt.Println("")
 	}
 
-	if c.useAgent && sshAuthSockExists() {
+	if dc.UseAgent && sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
 			return nil, err
@@ -193,7 +212,7 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		auth = append(auth, ssh.PublicKeys(signer))
 	}
 
-	cb, err := c.hostKeyCallback()
+	cb, err := hostKeyCallback(dc.Knownhosts)
 	if err != nil {
 		return nil, err
 	}
@@ -204,22 +223,20 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 		HostKeyCallback: cb,
 	}
 
-	proxyCommand := c.Get(host, "ProxyCommand")
-	proxyJump := c.Get(host, "ProxyJump")
+	proxyCommand := dc.ProxyCommand
+	proxyJump := dc.ProxyJump
 
 	if proxyCommand == "" && proxyJump != "" {
-		parsedProxyJump, err := c.parseProxyJump(proxyJump)
+		parsedProxyJump, err := parseProxyJump(proxyJump)
 		if err != nil {
 			return nil, err
 		}
-		proxyCommand = parsedProxyJump
+		proxyCommand = unescapeCharacters(parsedProxyJump, user, strconv.Itoa(port), hostname)
 	}
 
 	if proxyCommand != "" {
 		client, server := net.Pipe()
-		proxyCommand = c.unescapeCharacters(proxyCommand)
-		proxyCommand = strings.Replace(proxyCommand, "%p", port, -1)
-		proxyCommand = strings.Replace(proxyCommand, "%r", user, -1)
+		proxyCommand = unescapeCharacters(proxyCommand, user, strconv.Itoa(port), hostname)
 		cmd := exec.Command("sh", "-c", proxyCommand) // #nosec
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
@@ -257,27 +274,23 @@ func (c *Config) DialWithConfig() (*ssh.Client, error) {
 	return ssh.Dial("tcp", addr, sshConfig)
 }
 
-func (c *Config) unescapeCharacters(v string) string {
-	user := c.user
-	port := strconv.Itoa(c.port)
-	hostname, _ := c.getHostname()
-	v = strings.Replace(v, "%h", hostname, -1)
-	v = strings.Replace(v, "%p", port, -1)
-	v = strings.Replace(v, "%r", user, -1)
-	return v
-}
-
-func (c *Config) getHostname() (string, error) {
-	h := c.Get(c.host, "Hostname")
+func (c *Config) getHostname(host string) (string, error) {
+	h := c.Get(host, "Hostname")
 	if h == "" {
-		return c.host, nil
+		return host, nil
 	}
 	return h, nil
 }
 
-func (c *Config) getIdentityFile() (string, error) {
-	keyPath := c.Get(c.host, "IdentityFile")
-	keyPath = c.unescapeCharacters(keyPath)
+func (c *Config) getIdentityFile(host string) (string, error) {
+	user := c.Get(host, "User")
+	port := c.Get(host, "Port")
+	hostname, err := c.getHostname(host)
+	if err != nil {
+		return "", err
+	}
+	keyPath := c.Get(host, "IdentityFile")
+	keyPath = unescapeCharacters(keyPath, user, port, hostname)
 	homeDir, err := homedir.Dir()
 	if err != nil {
 		return "", err
@@ -290,9 +303,9 @@ func (c *Config) getIdentityFile() (string, error) {
 	return strings.Replace(keyPath, "~", homeDir, 1), nil
 }
 
-func (c *Config) hostKeyCallback() (ssh.HostKeyCallback, error) {
-	if len(c.knownhosts) > 0 {
-		hostKeyCallback, err := knownhosts.New(c.knownhosts...)
+func hostKeyCallback(files []string) (ssh.HostKeyCallback, error) {
+	if len(files) > 0 {
+		hostKeyCallback, err := knownhosts.New(files...)
 		if err != nil {
 			return nil, err
 		}
@@ -329,7 +342,7 @@ func sshAuthSockExists() bool {
 	return os.Getenv("SSH_AUTH_SOCK") != ""
 }
 
-func (c *Config) parseProxyJump(text string) (string, error) {
+func parseProxyJump(text string) (string, error) {
 	proxyPort := "22"
 	if strings.Contains(text, ":") {
 		var portReg = regexp.MustCompile(`.+:(?P<port>[0-9]+)`)
@@ -345,5 +358,12 @@ func (c *Config) parseProxyJump(text string) (string, error) {
 		}
 		text = text[:strings.Index(text, ":")]
 	}
-	return fmt.Sprintf("ssh -l %%r -W %%h:%%p  %s -p %s", c.unescapeCharacters(text), proxyPort), nil
+	return fmt.Sprintf("ssh -l %%r -W %%h:%%p  %s -p %s", text, proxyPort), nil
+}
+
+func unescapeCharacters(v, user, port, hostname string) string {
+	v = strings.Replace(v, "%h", hostname, -1)
+	v = strings.Replace(v, "%p", port, -1)
+	v = strings.Replace(v, "%r", user, -1)
+	return v
 }

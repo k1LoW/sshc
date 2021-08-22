@@ -7,7 +7,7 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	c, err := NewConfig("example.com", User("alice"))
+	c, err := NewConfig(User("alice"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -18,7 +18,7 @@ func TestUser(t *testing.T) {
 }
 
 func TestPort(t *testing.T) {
-	c, err := NewConfig("example.com", Port(10022))
+	c, err := NewConfig(Port(10022))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,8 +29,7 @@ func TestPort(t *testing.T) {
 
 	{
 		want := 12345
-		host := "simple"
-		c, err := NewConfig(host, ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"), Port(want))
+		c, err := NewConfig(ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"), Port(want))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -42,7 +41,7 @@ func TestPort(t *testing.T) {
 }
 
 func TestPassphrase(t *testing.T) {
-	c, err := NewConfig("example.com", Passphrase([]byte("secret")))
+	c, err := NewConfig(Passphrase([]byte("secret")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +52,7 @@ func TestPassphrase(t *testing.T) {
 }
 
 func TestConfigPath(t *testing.T) {
-	c, err := NewConfig("example.com", ConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(ConfigPath("/path/to/ssh_config"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +69,7 @@ func TestConfigPath(t *testing.T) {
 }
 
 func TestAppendConfigPath(t *testing.T) {
-	c, err := NewConfig("example.com", AppendConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(AppendConfigPath("/path/to/ssh_config"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +86,7 @@ func TestAppendConfigPath(t *testing.T) {
 }
 
 func TestClearConfigPath(t *testing.T) {
-	c, err := NewConfig("example.com", ClearConfigPath(), ConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(ClearConfigPath(), ConfigPath("/path/to/ssh_config"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +103,7 @@ func TestClearConfigPath(t *testing.T) {
 }
 
 func TestKnownhosts(t *testing.T) {
-	c, err := NewConfig("example.com", Knownhosts("/path/to/.ssh/known_hosts", "/root/.ssh/known_hosts"))
+	c, err := NewConfig(Knownhosts("/path/to/.ssh/known_hosts", "/root/.ssh/known_hosts"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +157,7 @@ func TestGet(t *testing.T) {
 			},
 		}
 		for _, tt := range tests {
-			c, err := NewConfig(tt.host, ClearConfigPath(), ConfigPath(p))
+			c, err := NewConfig(ClearConfigPath(), ConfigPath(p))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -211,8 +210,7 @@ func TestConfig_parseProxyJump(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, _ := NewConfig("example.com")
-			got, err := c.parseProxyJump(tt.text)
+			got, err := parseProxyJump(tt.text)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Config.parseProxyJump() error = %v, wantErr %v", err, tt.wantErr)
 				return
