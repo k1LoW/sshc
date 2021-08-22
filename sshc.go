@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -172,7 +171,7 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", hostname, port)
 
 	auth := []ssh.AuthMethod{}
-	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
+	key, err := os.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return nil, err
 	}
