@@ -165,21 +165,17 @@ func (c *Config) Get(host, key string) string {
 
 // Dial returns *ssh.Client using Config
 func Dial(dc *DialConfig) (*ssh.Client, error) {
-	user := dc.User
-	port := dc.Port
-	hostname := dc.Hostname
-	keyPath := dc.IdentityFile
-	addr := fmt.Sprintf("%s:%d", hostname, port)
+	addr := fmt.Sprintf("%s:%d", dc.Hostname, dc.Port)
 
 	auth := []ssh.AuthMethod{}
-	key, err := os.ReadFile(filepath.Clean(keyPath))
+	key, err := os.ReadFile(filepath.Clean(dc.IdentityFile))
 	if err != nil {
 		return nil, err
 	}
 	signer, err := sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
 	if err != nil {
 		// passphrase
-		fmt.Printf("Enter passphrase for key '%s': ", keyPath)
+		fmt.Printf("Enter passphrase for key '%s': ", dc.IdentityFile)
 		passPhrase, err := terminal.ReadPassword(0)
 		if err != nil {
 			fmt.Println("")
@@ -217,33 +213,31 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User:            user,
+		User:            dc.User,
 		Auth:            auth,
 		HostKeyCallback: cb,
 	}
 
 	proxyCommand := dc.ProxyCommand
-	proxyJump := dc.ProxyJump
-
-	if proxyCommand == "" && proxyJump != "" {
-		parsedProxyJump, err := parseProxyJump(proxyJump)
+	if proxyCommand == "" && dc.ProxyJump != "" {
+		parsedProxyJump, err := parseProxyJump(dc.ProxyJump)
 		if err != nil {
 			return nil, err
 		}
-		proxyCommand = unescapeCharacters(parsedProxyJump, user, strconv.Itoa(port), hostname)
+		proxyCommand = unescapeCharacters(parsedProxyJump, dc.User, strconv.Itoa(dc.Port), dc.Hostname)
 	}
 
 	if proxyCommand != "" {
 		client, server := net.Pipe()
-		proxyCommand = unescapeCharacters(proxyCommand, user, strconv.Itoa(port), hostname)
-		cmd := exec.Command("sh", "-c", proxyCommand) // #nosec
+		unescapedProxyCommand := unescapeCharacters(proxyCommand, dc.User, strconv.Itoa(dc.Port), dc.Hostname)
+		cmd := exec.Command("sh", "-c", unescapedProxyCommand) // #nosec
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
 		cmd.Stdout = server
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Start(); err != nil {
-			return nil, fmt.Errorf("proxy command:%s error:%s", proxyCommand, err)
+			return nil, fmt.Errorf("proxy command:%s error:%s", unescapedProxyCommand, err)
 		}
 
 		done := make(chan *ssh.Client)
