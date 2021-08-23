@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2.1.1](https://github.com/k1LoW/sshc/compare/v2.1.0...v2.1.1) (2021-08-23)
+
+
 ## [v2.1.0](https://github.com/k1LoW/sshc/compare/v2.0.0...v2.1.0) (2021-08-23)
 
 * Support password [#18](https://github.com/k1LoW/sshc/pull/18) ([k1LoW](https://github.com/k1LoW))
