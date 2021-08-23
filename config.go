@@ -31,6 +31,7 @@ type Config struct {
 	useAgent    bool
 	configs     []*ssh_config.Config
 	knownhosts  []string
+	password    string
 }
 
 // Option is the type for change Config.
@@ -205,6 +206,14 @@ func UseAgent(u bool) Option {
 func Knownhosts(files ...string) Option {
 	return func(c *Config) error {
 		c.knownhosts = files
+		return nil
+	}
+}
+
+// Password returns Option that override Config.password
+func Password(pass string) Option {
+	return func(c *Config) error {
+		c.password = pass
 		return nil
 	}
 }

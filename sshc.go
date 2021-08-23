@@ -31,6 +31,7 @@ type DialConfig struct {
 	IdentityFile string
 	ProxyCommand string
 	ProxyJump    string
+	Password     string
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -46,6 +47,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		Passphrase:   c.passphrase,
 		Knownhosts:   c.knownhosts,
 		UseAgent:     c.useAgent,
+		Password:     c.password,
 	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
@@ -62,6 +64,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.IdentityFile = keyPath
+	fmt.Printf("%#v\n", dc)
 
 	return Dial(dc)
 }
@@ -70,28 +73,30 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 func Dial(dc *DialConfig) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", dc.Hostname, dc.Port)
 
+	var signer ssh.Signer
 	auth := []ssh.AuthMethod{}
-	key, err := os.ReadFile(filepath.Clean(dc.IdentityFile))
-	if err != nil {
-		return nil, err
-	}
-	signer, err := sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
-	if err != nil {
-		// passphrase
-		fmt.Printf("Enter passphrase for key '%s': ", dc.IdentityFile)
-		passPhrase, err := term.ReadPassword(0)
+	if dc.IdentityFile != "" {
+		key, err := os.ReadFile(filepath.Clean(dc.IdentityFile))
 		if err != nil {
-			fmt.Println("")
 			return nil, err
 		}
-		signer, err = sshkeys.ParseEncryptedPrivateKey(key, passPhrase)
+		signer, err = sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
 		if err != nil {
+			// passphrase
+			fmt.Printf("Enter passphrase for key '%s': ", dc.IdentityFile)
+			passPhrase, err := term.ReadPassword(0)
+			if err != nil {
+				fmt.Println("")
+				return nil, err
+			}
+			signer, err = sshkeys.ParseEncryptedPrivateKey(key, passPhrase)
+			if err != nil {
+				fmt.Println("")
+				return nil, err
+			}
 			fmt.Println("")
-			return nil, err
 		}
-		fmt.Println("")
 	}
-
 	if dc.UseAgent && sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
@@ -103,11 +108,16 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		}
 		if len(identities) > 0 {
 			auth = append(auth, ssh.PublicKeysCallback(sshAgentClient.Signers))
-		} else {
+		} else if signer != nil {
 			auth = append(auth, ssh.PublicKeys(signer))
 		}
-	} else {
+	} else if signer != nil {
 		auth = append(auth, ssh.PublicKeys(signer))
+	}
+
+	// password
+	if dc.Password != "" {
+		auth = append(auth, ssh.Password(dc.Password))
 	}
 
 	cb, err := hostKeyCallback(dc.Knownhosts)
