@@ -64,7 +64,6 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.IdentityFile = keyPath
-	fmt.Printf("%#v\n", dc)
 
 	return Dial(dc)
 }
