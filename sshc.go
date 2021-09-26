@@ -32,6 +32,7 @@ type DialConfig struct {
 	ProxyCommand string
 	ProxyJump    string
 	Password     string
+	Timeout      time.Duration
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -128,6 +129,7 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		User:            dc.User,
 		Auth:            auth,
 		HostKeyCallback: cb,
+		Timeout:         dc.Timeout,
 	}
 
 	proxyCommand := dc.ProxyCommand
