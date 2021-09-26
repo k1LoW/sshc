@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.2.0](https://github.com/k1LoW/sshc/compare/v2.1.1...v2.2.0) (2021-09-27)
+
+* Support timeout [#19](https://github.com/k1LoW/sshc/pull/19) ([k1LoW](https://github.com/k1LoW))
+
 ## [v2.1.1](https://github.com/k1LoW/sshc/compare/v2.1.0...v2.1.1) (2021-08-23)
 
 
