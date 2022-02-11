@@ -17,9 +17,6 @@ jobs:
         with:
           go-version: ${{ matrix.go_version }}
 
-      - name: Install codecov
-        run: sudo pip install codecov
-
       - name: Check out source code
         uses: actions/checkout@v2
 
@@ -36,11 +33,6 @@ jobs:
 
       - name: Test
         run: make ci
-
-      - name: Run codecov
-        run: codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run octocov
         uses: k1LoW/octocov-action@v0
