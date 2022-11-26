@@ -18,6 +18,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
 
       - name: Start SSH server
         timeout-minutes: 1
@@ -31,7 +32,10 @@ jobs:
             ssh -vvv bastion -F ./testdata/ssh_config hostname
             ssh -vvv server -F ./testdata/ssh_config hostname
 
-      - name: Test
+      - name: Run lint
+        uses: reviewdog/action-golangci-lint@v2
+
+      - name: Run test
         run: make ci
 
       - name: Run octocov
