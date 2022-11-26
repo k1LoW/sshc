@@ -5,7 +5,7 @@ Host bastion
   IdentityFile ./testdata/id_rsa
 
 Host server
-  HostName  172.30.0.3
+  HostName 172.30.0.3
   User root
   Port 22
   IdentityFile ./testdata/id_rsa

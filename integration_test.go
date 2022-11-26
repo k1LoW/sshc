@@ -94,7 +94,10 @@ func getHostname(dest string, useAgent bool, sudo bool) (string, error) {
 		return "", err
 	}
 
-	session, _ := client.NewSession()
+	session, err := client.NewSession()
+	if err != nil {
+		return "", err
+	}
 	defer session.Close()
 
 	var stdout = &bytes.Buffer{}
