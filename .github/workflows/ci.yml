@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -12,22 +14,22 @@ jobs:
       matrix:
         go_version: [1.17]
     steps:
+      - name: Check out source code
+        uses: actions/checkout@v3
+
       - name: Set up Go ${{ matrix.go_version }}
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go_version }}
-
-      - name: Check out source code
-        uses: actions/checkout@v2
 
       - name: Start SSH server
         run: |
             sudo chmod 600 ./testdata/id_rsa
-            sudo chmod 644 ./testdata/id_rsa.pub
+            sudo chmod 600 ./testdata/id_rsa.pub
             docker-compose up -d
-            while [ `docker-compose logs | grep -c Running` -ne 2 ]; do sleep 1; echo 'sleeping'; done;
+            while [ `docker-compose logs | grep -c 'Server listening'` -ne 4 ]; do sleep 1; echo 'sleeping'; done;
             sudo chmod 600 ./testdata/id_rsa
-            sudo chmod 644 ./testdata/id_rsa.pub
+            sudo chmod 600 ./testdata/id_rsa.pub
             ssh -vvv bastion -F ./testdata/ssh_config hostname
             ssh -vvv server -F ./testdata/ssh_config hostname
 
