@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.3.0](https://github.com/k1LoW/sshc/compare/v2.2.0...v2.3.0) (2022-11-26)
+
+* Bump up go and pkgs version [#22](https://github.com/k1LoW/sshc/pull/22) ([k1LoW](https://github.com/k1LoW))
+* Use panubo/sshd:latest instead of k1low/sshd [#21](https://github.com/k1LoW/sshc/pull/21) ([k1LoW](https://github.com/k1LoW))
+* Use octocov [#20](https://github.com/k1LoW/sshc/pull/20) ([k1LoW](https://github.com/k1LoW))
+
 ## [v2.2.0](https://github.com/k1LoW/sshc/compare/v2.1.1...v2.2.0) (2021-09-27)
 
 * Support timeout [#19](https://github.com/k1LoW/sshc/pull/19) ([k1LoW](https://github.com/k1LoW))
