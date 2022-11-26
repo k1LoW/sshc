@@ -1,23 +1,33 @@
 version: '3'
 services:
   bastion:
-    image: k1low/sshd
+    image: panubo/sshd:latest
     hostname: bastion
     ports:
       - "9022:22"
     volumes:
-      - ./testdata/id_rsa.pub:/etc/authorized_keys/k1low
-      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./testdata/id_rsa.pub:/keys/id_rsa.pub
+      - ./testdata/entrypoint.d:/etc/entrypoint.d
     environment:
       - SSH_USERS=k1low:1000:1000
+      - SSH_ENABLE_ROOT=true
+      - SSH_ENABLE_PASSWORD_AUTH=true
+      - SSH_ENABLE_ROOT_PASSWORD_AUTH=true
+      - TCP_FORWARDING=true
     networks:
       app_net:
         ipv4_address: 172.30.0.2
   server:
-    image: k1low/sshd
+    image: panubo/sshd:latest
     hostname: server
     volumes:
-      - ./testdata/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./testdata/id_rsa.pub:/keys/id_rsa.pub
+      - ./testdata/entrypoint.d:/etc/entrypoint.d
+    environment:
+      - SSH_USERS=k1low:1000:1000
+      - SSH_ENABLE_ROOT=true
+      - SSH_ENABLE_PASSWORD_AUTH=true
+      - SSH_ENABLE_ROOT_PASSWORD_AUTH=true
     networks:
       app_net:
         ipv4_address: 172.30.0.3
