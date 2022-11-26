@@ -23,6 +23,7 @@ jobs:
           go-version: ${{ matrix.go_version }}
 
       - name: Start SSH server
+        timeout-minutes: 1
         run: |
             sudo chmod 600 ./testdata/id_rsa
             sudo chmod 600 ./testdata/id_rsa.pub
