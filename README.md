@@ -1,4 +1,4 @@
-# sshc [![Build Status](https://github.com/k1LoW/sshc/workflows/build/badge.svg)](https://github.com/k1LoW/sshc/actions) [![GoDoc](https://godoc.org/github.com/k1LoW/sshc?status.svg)](https://godoc.org/github.com/k1LoW/sshc)
+# sshc [![Build Status](https://github.com/k1LoW/sshc/workflows/build/badge.svg)](https://github.com/k1LoW/sshc/actions) [![GoDoc](https://godoc.org/github.com/k1LoW/sshc?status.svg)](https://godoc.org/github.com/k1LoW/sshc) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/ratio.svg)
 
 `sshc.NewClient()` returns `*ssh.Client` using [ssh_config(5)](https://linux.die.net/man/5/ssh_config)
 
