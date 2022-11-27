@@ -25,6 +25,7 @@ var (
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
 	configPaths []string
+	hostname    string
 	user        string
 	port        int
 	passphrase  []byte
@@ -113,6 +114,9 @@ func (c *Config) Get(host, key string) string {
 }
 
 func (c *Config) getHostname(host string) (string, error) {
+	if c.hostname != "" {
+		return c.hostname, nil
+	}
 	h := c.Get(host, "Hostname")
 	if h == "" {
 		return host, nil
@@ -153,6 +157,14 @@ func User(u string) Option {
 func Port(p int) Option {
 	return func(c *Config) error {
 		c.port = p
+		return nil
+	}
+}
+
+// Hostname returns Option that set Config.hostname for override SSH client port.
+func Hostname(h string) Option {
+	return func(c *Config) error {
+		c.hostname = h
 		return nil
 	}
 }
