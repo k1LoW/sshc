@@ -40,6 +40,17 @@ func TestPort(t *testing.T) {
 	}
 }
 
+func TestHostname(t *testing.T) {
+	c, err := NewConfig(Hostname("example.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "example.com"
+	if got, _ := c.getHostname("dummy"); got != want {
+		t.Fatalf("want = %#v, got = %#v", want, got)
+	}
+}
+
 func TestPassphrase(t *testing.T) {
 	c, err := NewConfig(Passphrase([]byte("secret")))
 	if err != nil {
