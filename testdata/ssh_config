@@ -2,14 +2,14 @@ Host bastion
   HostName 127.0.0.1
   User k1low
   Port 9022
-  IdentityFile ./testdata/id_rsa
+  IdentityFile id_rsa
 
 Host server
   HostName 172.30.0.3
   User root
   Port 22
-  IdentityFile ./testdata/id_rsa
-  ProxyCommand ssh -W %h:%p bastion -F ./testdata/ssh_config
+  IdentityFile id_rsa
+  ProxyCommand ssh -W %h:%p bastion -F ssh_config
 
 Host simple
 

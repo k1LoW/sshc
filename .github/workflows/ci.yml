@@ -29,8 +29,9 @@ jobs:
             while [ `docker-compose logs | grep -c 'Server listening'` -ne 4 ]; do sleep 1; echo 'sleeping'; done;
             sudo chmod 600 ./testdata/id_rsa
             sudo chmod 600 ./testdata/id_rsa.pub
-            ssh -vvv bastion -F ./testdata/ssh_config hostname
-            ssh -vvv server -F ./testdata/ssh_config hostname
+            cd ./testdata
+            ssh -vvv bastion -F ssh_config hostname
+            ssh -vvv server -F ssh_config hostname
 
       - name: Run lint
         uses: reviewdog/action-golangci-lint@v2

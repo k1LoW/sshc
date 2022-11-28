@@ -12,7 +12,7 @@ lint:
 
 integration:
 	chmod 600 ./testdata/id_rsa
-	go test ./... -integration -coverprofile=coverage.out -covermode=count
+	go test -v ./... -integration -coverprofile=coverage.out -covermode=count
 
 depsdev:
 	go install github.com/linyows/git-semv/cmd/git-semv@latest
