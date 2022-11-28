@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.4.0](https://github.com/k1LoW/sshc/compare/v2.3.0...v2.4.0) (2022-11-28)
+
+* Fix Config.Get() [#25](https://github.com/k1LoW/sshc/pull/25) ([k1LoW](https://github.com/k1LoW))
+* Add `IdentityFile` and `IdentityKey` option [#24](https://github.com/k1LoW/sshc/pull/24) ([k1LoW](https://github.com/k1LoW))
+* Support hostname option [#23](https://github.com/k1LoW/sshc/pull/23) ([k1LoW](https://github.com/k1LoW))
+
 ## [v2.3.0](https://github.com/k1LoW/sshc/compare/v2.2.0...v2.3.0) (2022-11-26)
 
 * Bump up go and pkgs version [#22](https://github.com/k1LoW/sshc/pull/22) ([k1LoW](https://github.com/k1LoW))
