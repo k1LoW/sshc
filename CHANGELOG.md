@@ -1,5 +1,8 @@
 # Changelog
 
+## [v3.0.1](https://github.com/k1LoW/sshc/compare/v3.0.0...v3.0.1) - 2022-11-28
+- Fix `module` section of go.mod  by @k1LoW in https://github.com/k1LoW/sshc/pull/31
+
 ## [v3.0.0](https://github.com/k1LoW/sshc/compare/v2.4.1...v3.0.0) - 2022-11-28
 - [BREAKING] Fix identity file path resolution / Fix proxyCommand execute working directory by @k1LoW in https://github.com/k1LoW/sshc/pull/26
 - Update README by @k1LoW in https://github.com/k1LoW/sshc/pull/30
