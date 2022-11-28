@@ -22,6 +22,11 @@ var (
 	includeRelRe2 = regexp.MustCompile(`^(Include\s+)([^~/].+)$`)
 )
 
+type sshConfig struct {
+	sc   *ssh_config.Config
+	path string
+}
+
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
 	configPaths []string
@@ -31,7 +36,7 @@ type Config struct {
 	identityKey []byte
 	passphrase  []byte
 	useAgent    bool
-	configs     []*ssh_config.Config
+	sshConfigs  []*sshConfig
 	knownhosts  []string
 	password    string
 }
@@ -59,11 +64,11 @@ func NewConfig(options ...Option) (*Config, error) {
 	}
 
 	for _, p := range c.configPaths {
-		cPath := strings.Replace(p, "~", homeDir, 1)
+		cPath := filepath.Clean(strings.Replace(p, "~", homeDir, 1))
 		if _, err := os.Lstat(cPath); err != nil {
 			continue
 		}
-		f, err := os.Open(filepath.Clean(cPath))
+		f, err := os.Open(cPath)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +94,7 @@ func NewConfig(options ...Option) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.configs = append([]*ssh_config.Config{cfg}, c.configs...)
+		c.sshConfigs = append([]*sshConfig{{path: cPath, sc: cfg}}, c.sshConfigs...)
 	}
 
 	return c, nil
@@ -118,8 +123,8 @@ func (c *Config) Get(host, key string) string {
 }
 
 func (c *Config) getRaw(host, key string) string {
-	for _, cfg := range c.configs {
-		val, err := cfg.Get(host, key)
+	for _, scs := range c.sshConfigs {
+		val, err := scs.sc.Get(host, key)
 		if err != nil || val != "" {
 			return val
 		}
