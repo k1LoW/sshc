@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,7 +27,7 @@ type DialConfig struct {
 	Passphrase   []byte
 	UseAgent     bool
 	Knownhosts   []string
-	IdentityFile string
+	IdentityKey  []byte
 	ProxyCommand string
 	ProxyJump    string
 	Password     string
@@ -60,11 +59,11 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.Port = port
-	keyPath, err := c.getIdentityFile(host)
+	key, err := c.getIdentityKey(host)
 	if err != nil {
 		return nil, err
 	}
-	dc.IdentityFile = keyPath
+	dc.IdentityKey = key
 
 	return Dial(dc)
 }
@@ -72,18 +71,17 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 // Dial returns *ssh.Client using Config
 func Dial(dc *DialConfig) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", dc.Hostname, dc.Port)
-
-	var signer ssh.Signer
+	var (
+		signer ssh.Signer
+		err    error
+	)
 	auth := []ssh.AuthMethod{}
-	if dc.IdentityFile != "" {
-		key, err := os.ReadFile(filepath.Clean(dc.IdentityFile))
-		if err != nil {
-			return nil, err
-		}
+	if dc.IdentityKey != nil {
+		key := dc.IdentityKey
 		signer, err = sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
 		if err != nil {
 			// passphrase
-			fmt.Printf("Enter passphrase for key '%s': ", dc.IdentityFile)
+			fmt.Print("Enter passphrase for key: ")
 			passPhrase, err := term.ReadPassword(0)
 			if err != nil {
 				fmt.Println("")

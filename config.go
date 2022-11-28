@@ -28,6 +28,7 @@ type Config struct {
 	hostname    string
 	user        string
 	port        int
+	identityKey []byte
 	passphrase  []byte
 	useAgent    bool
 	configs     []*ssh_config.Config
@@ -124,25 +125,29 @@ func (c *Config) getHostname(host string) (string, error) {
 	return h, nil
 }
 
-func (c *Config) getIdentityFile(host string) (string, error) {
+func (c *Config) getIdentityKey(host string) ([]byte, error) {
+	if c.identityKey != nil {
+		return c.identityKey, nil
+	}
+
 	user := c.Get(host, "User")
 	port := c.Get(host, "Port")
 	hostname, err := c.getHostname(host)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	keyPath := c.Get(host, "IdentityFile")
 	keyPath = unescapeCharacters(keyPath, user, port, hostname)
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if keyPath == "~/.ssh/identity" {
 		if _, err := os.Lstat(strings.Replace(keyPath, "~", homeDir, 1)); err != nil {
 			keyPath = "~/.ssh/id_rsa"
 		}
 	}
-	return strings.Replace(keyPath, "~", homeDir, 1), nil
+	return os.ReadFile(strings.Replace(keyPath, "~", homeDir, 1))
 }
 
 // User returns Option that set Config.user for override SSH client user.
@@ -165,6 +170,26 @@ func Port(p int) Option {
 func Hostname(h string) Option {
 	return func(c *Config) error {
 		c.hostname = h
+		return nil
+	}
+}
+
+// IdentityFile returns Option that set Config.identityKey for override SSH client identity file.
+func IdentityFile(p string) Option {
+	return func(c *Config) error {
+		key, err := os.ReadFile(filepath.Clean(p))
+		if err != nil {
+			return err
+		}
+		c.identityKey = key
+		return nil
+	}
+}
+
+// IdentityKey returns Option that set Config.identityKey for override SSH client identity file.
+func IdentityKey(b []byte) Option {
+	return func(c *Config) error {
+		c.identityKey = b
 		return nil
 	}
 }
