@@ -75,9 +75,9 @@ func NewConfig(options ...Option) (*Config, error) {
 
 			// Replace include path
 			if includeRelRe.Match(line) {
-				line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", os.Getenv("HOME"))))
+				line = includeRelRe.ReplaceAll(line, []byte(fmt.Sprintf("Include %s$2", homeDir)))
 			} else if includeRelRe2.Match(line) {
-				line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", os.Getenv("HOME"))))
+				line = includeRelRe2.ReplaceAll(line, []byte(fmt.Sprintf("Include %s/.ssh/$2", homeDir)))
 			}
 
 			if _, err := buf.Write(append(line, []byte("\n")...)); err != nil {
