@@ -41,7 +41,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc := &DialConfig{
-		User:         c.Get(host, "User"),
+		User:         c.getUser(host),
 		ProxyCommand: c.Get(host, "ProxyCommand"),
 		ProxyJump:    c.Get(host, "ProxyJump"),
 		Passphrase:   c.passphrase,
@@ -54,7 +54,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.Hostname = hostname
-	port, err := strconv.Atoi(c.Get(host, "Port"))
+	port, err := c.getPort(host)
 	if err != nil {
 		return nil, err
 	}
@@ -136,12 +136,12 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		proxyCommand = unescapeCharacters(parsedProxyJump, dc.User, strconv.Itoa(dc.Port), dc.Hostname)
+		proxyCommand = unescapeCharacters(parsedProxyJump, dc.User, dc.Port, dc.Hostname)
 	}
 
 	if proxyCommand != "" {
 		client, server := net.Pipe()
-		unescapedProxyCommand := unescapeCharacters(proxyCommand, dc.User, strconv.Itoa(dc.Port), dc.Hostname)
+		unescapedProxyCommand := unescapeCharacters(proxyCommand, dc.User, dc.Port, dc.Hostname)
 		cmd := exec.Command("sh", "-c", unescapedProxyCommand) // #nosec
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
@@ -212,9 +212,9 @@ func parseProxyJump(text string) (string, error) {
 	return fmt.Sprintf("ssh -l %%r -W %%h:%%p  %s -p %s", text, proxyPort), nil
 }
 
-func unescapeCharacters(v, user, port, hostname string) string {
+func unescapeCharacters(v, user string, port int, hostname string) string {
 	v = strings.Replace(v, "%h", hostname, -1)
-	v = strings.Replace(v, "%p", port, -1)
+	v = strings.Replace(v, "%p", strconv.Itoa(port), -1)
 	v = strings.Replace(v, "%r", user, -1)
 	return v
 }

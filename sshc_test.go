@@ -161,29 +161,31 @@ func TestGet(t *testing.T) {
 			},
 			{
 				"simple",
-				"",
+				"simple",
 				"22",
 				"",
 				"~/.ssh/identity",
 			},
 		}
 		for _, tt := range tests {
-			c, err := NewConfig(ClearConfigPath(), ConfigPath(p))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if got := c.Get(tt.host, "Hostname"); got != tt.wantHostname {
-				t.Errorf("want = %#v, got = %#v", tt.wantHostname, got)
-			}
-			if got := c.Get(tt.host, "Port"); got != tt.wantPort {
-				t.Errorf("want = %#v, got = %#v", tt.wantPort, got)
-			}
-			if got := c.Get(tt.host, "User"); got != tt.wantUser {
-				t.Errorf("want = %#v, got = %#v", tt.wantUser, got)
-			}
-			if got := c.Get(tt.host, "IdentityFile"); got != tt.wantIdentityFile {
-				t.Errorf("want = %#v, got = %#v", tt.wantIdentityFile, got)
-			}
+			t.Run(tt.host, func(t *testing.T) {
+				c, err := NewConfig(ClearConfigPath(), ConfigPath(p))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got := c.Get(tt.host, "Hostname"); got != tt.wantHostname {
+					t.Errorf("want = %#v, got = %#v", tt.wantHostname, got)
+				}
+				if got := c.Get(tt.host, "Port"); got != tt.wantPort {
+					t.Errorf("want = %#v, got = %#v", tt.wantPort, got)
+				}
+				if got := c.Get(tt.host, "User"); got != tt.wantUser {
+					t.Errorf("want = %#v, got = %#v", tt.wantUser, got)
+				}
+				if got := c.Get(tt.host, "IdentityFile"); got != tt.wantIdentityFile {
+					t.Errorf("want = %#v, got = %#v", tt.wantIdentityFile, got)
+				}
+			})
 		}
 	}
 }
