@@ -1,4 +1,4 @@
-module github.com/k1LoW/sshc/v2
+module github.com/k1LoW/sshc/v3
 
 go 1.19
 
