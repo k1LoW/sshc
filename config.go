@@ -98,13 +98,26 @@ func NewConfig(options ...Option) (*Config, error) {
 // Get returns Config value.
 func (c *Config) Get(host, key string) string {
 	// Return the value overridden by option
-	switch {
-	case key == "User" && c.user != "":
-		return c.user
-	case key == "Port" && c.port != 0:
-		return strconv.Itoa(c.port)
+	switch key {
+	case "User":
+		return c.getUser(host)
+	case "Port":
+		p, err := c.getPort(host)
+		if err != nil {
+			return ""
+		}
+		return strconv.Itoa(p)
+	case "Hostname":
+		h, err := c.getHostname(host)
+		if err != nil {
+			return ""
+		}
+		return h
 	}
+	return c.getRaw(host, key)
+}
 
+func (c *Config) getRaw(host, key string) string {
 	for _, cfg := range c.configs {
 		val, err := cfg.Get(host, key)
 		if err != nil || val != "" {
@@ -114,11 +127,26 @@ func (c *Config) Get(host, key string) string {
 	return ssh_config.Default(key)
 }
 
+func (c *Config) getUser(host string) string {
+	if c.user != "" {
+		return c.user
+	}
+	return c.getRaw(host, "User")
+}
+
+func (c *Config) getPort(host string) (int, error) {
+	if c.port != 0 {
+		return c.port, nil
+	}
+	p := c.getRaw(host, "Port")
+	return strconv.Atoi(p)
+}
+
 func (c *Config) getHostname(host string) (string, error) {
 	if c.hostname != "" {
 		return c.hostname, nil
 	}
-	h := c.Get(host, "Hostname")
+	h := c.getRaw(host, "Hostname")
 	if h == "" {
 		return host, nil
 	}
@@ -130,13 +158,16 @@ func (c *Config) getIdentityKey(host string) ([]byte, error) {
 		return c.identityKey, nil
 	}
 
-	user := c.Get(host, "User")
-	port := c.Get(host, "Port")
+	user := c.getUser(host)
+	port, err := c.getPort(host)
+	if err != nil {
+		return nil, err
+	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
 		return nil, err
 	}
-	keyPath := c.Get(host, "IdentityFile")
+	keyPath := c.getRaw(host, "IdentityFile")
 	keyPath = unescapeCharacters(keyPath, user, port, hostname)
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
