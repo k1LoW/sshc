@@ -23,7 +23,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.com/k1LoW/sshc/v2"
+	"github.com/k1LoW/sshc/v3"
 )
 
 func main() {
