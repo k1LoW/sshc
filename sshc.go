@@ -32,6 +32,7 @@ type DialConfig struct {
 	ProxyJump    string
 	Password     string
 	Timeout      time.Duration
+	Wd           string
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -40,14 +41,22 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	pc, wd := c.getProxyCommand(host)
+	if wd == "" {
+		wd, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
 	dc := &DialConfig{
 		User:         c.getUser(host),
-		ProxyCommand: c.Get(host, "ProxyCommand"),
+		ProxyCommand: pc,
 		ProxyJump:    c.Get(host, "ProxyJump"),
 		Passphrase:   c.passphrase,
 		Knownhosts:   c.knownhosts,
 		UseAgent:     c.useAgent,
 		Password:     c.password,
+		Wd:           wd,
 	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
@@ -143,6 +152,7 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		client, server := net.Pipe()
 		unescapedProxyCommand := expandVerbs(proxyCommand, dc.User, dc.Port, dc.Hostname)
 		cmd := exec.Command("sh", "-c", unescapedProxyCommand) // #nosec
+		cmd.Dir = dc.Wd
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
 		cmd.Stdout = server

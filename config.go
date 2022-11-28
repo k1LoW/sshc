@@ -132,6 +132,16 @@ func (c *Config) getRaw(host, key string) string {
 	return ssh_config.Default(key)
 }
 
+func (c *Config) getRawWithBase(host, key string) (string, string) {
+	for _, scs := range c.sshConfigs {
+		val, err := scs.sc.Get(host, key)
+		if err != nil || val != "" {
+			return val, filepath.Dir(scs.path)
+		}
+	}
+	return ssh_config.Default(key), ""
+}
+
 func (c *Config) getUser(host string) string {
 	if c.user != "" {
 		return c.user
@@ -172,18 +182,27 @@ func (c *Config) getIdentityKey(host string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	keyPath := c.getRaw(host, "IdentityFile")
+
+	keyPath, base := c.getRawWithBase(host, "IdentityFile")
 	keyPath = expandVerbs(keyPath, user, port, hostname)
-	homeDir, err := os.UserHomeDir()
+	keyPath, err = expandPath(keyPath, base)
 	if err != nil {
 		return nil, err
 	}
-	if keyPath == "~/.ssh/identity" {
-		if _, err := os.Lstat(strings.Replace(keyPath, "~", homeDir, 1)); err != nil {
-			keyPath = "~/.ssh/id_rsa"
+	if i, _ := expandPath("~/.ssh/identity", base); keyPath == i {
+		if _, err := os.Lstat(i); err != nil {
+			keyPath, err = expandPath("~/.ssh/id_rsa", base)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	return os.ReadFile(strings.Replace(keyPath, "~", homeDir, 1))
+
+	return os.ReadFile(keyPath)
+}
+
+func (c *Config) getProxyCommand(host string) (string, string) {
+	return c.getRawWithBase(host, "ProxyCommand")
 }
 
 // User returns Option that set Config.user for override SSH client user.
@@ -301,4 +320,19 @@ func unique(s []string) []string {
 		}
 	}
 	return l
+}
+
+func expandPath(path, base string) (string, error) {
+	switch {
+	case strings.HasPrefix(path, "/"):
+		return path, nil
+	case strings.HasPrefix(path, "~"):
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Clean(strings.Replace(path, "~", homeDir, 1)), nil
+	default:
+		return filepath.Clean(filepath.Join(base, path)), nil
+	}
 }
