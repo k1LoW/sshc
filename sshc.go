@@ -136,12 +136,12 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		proxyCommand = unescapeCharacters(parsedProxyJump, dc.User, dc.Port, dc.Hostname)
+		proxyCommand = expandVerbs(parsedProxyJump, dc.User, dc.Port, dc.Hostname)
 	}
 
 	if proxyCommand != "" {
 		client, server := net.Pipe()
-		unescapedProxyCommand := unescapeCharacters(proxyCommand, dc.User, dc.Port, dc.Hostname)
+		unescapedProxyCommand := expandVerbs(proxyCommand, dc.User, dc.Port, dc.Hostname)
 		cmd := exec.Command("sh", "-c", unescapedProxyCommand) // #nosec
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
@@ -212,7 +212,7 @@ func parseProxyJump(text string) (string, error) {
 	return fmt.Sprintf("ssh -l %%r -W %%h:%%p  %s -p %s", text, proxyPort), nil
 }
 
-func unescapeCharacters(v, user string, port int, hostname string) string {
+func expandVerbs(v, user string, port int, hostname string) string {
 	v = strings.Replace(v, "%h", hostname, -1)
 	v = strings.Replace(v, "%p", strconv.Itoa(port), -1)
 	v = strings.Replace(v, "%r", user, -1)

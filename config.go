@@ -168,7 +168,7 @@ func (c *Config) getIdentityKey(host string) ([]byte, error) {
 		return nil, err
 	}
 	keyPath := c.getRaw(host, "IdentityFile")
-	keyPath = unescapeCharacters(keyPath, user, port, hostname)
+	keyPath = expandVerbs(keyPath, user, port, hostname)
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
