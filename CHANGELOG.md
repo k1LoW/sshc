@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2.4.1](https://github.com/k1LoW/sshc/compare/v2.4.0...v2.4.1) - 2022-11-28
+- Use tagpr by @k1LoW in https://github.com/k1LoW/sshc/pull/27
+
 ## [v2.4.0](https://github.com/k1LoW/sshc/compare/v2.3.0...v2.4.0) (2022-11-28)
 
 * Fix Config.Get() [#25](https://github.com/k1LoW/sshc/pull/25) ([k1LoW](https://github.com/k1LoW))
