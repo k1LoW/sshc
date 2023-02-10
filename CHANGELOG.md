@@ -1,5 +1,8 @@
 # Changelog
 
+## [v3.1.0](https://github.com/k1LoW/sshc/compare/v3.0.1...v3.1.0) - 2023-02-10
+- Add `AuthMethod` option for appending ssh.AuthMethod by @k1LoW in https://github.com/k1LoW/sshc/pull/33
+
 ## [v3.0.1](https://github.com/k1LoW/sshc/compare/v3.0.0...v3.0.1) - 2022-11-28
 - Fix `module` section of go.mod  by @k1LoW in https://github.com/k1LoW/sshc/pull/31
 
