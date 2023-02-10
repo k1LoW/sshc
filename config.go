@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kevinburke/ssh_config"
+	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -39,6 +40,7 @@ type Config struct {
 	sshConfigs  []*sshConfig
 	knownhosts  []string
 	password    string
+	auth        []ssh.AuthMethod
 }
 
 // Option is the type for change Config.
@@ -306,6 +308,14 @@ func Knownhosts(files ...string) Option {
 func Password(pass string) Option {
 	return func(c *Config) error {
 		c.password = pass
+		return nil
+	}
+}
+
+// AuthMethod returns Option that append ssh.AuthMethod to Config.auth
+func AuthMethod(m ssh.AuthMethod) Option {
+	return func(c *Config) error {
+		c.auth = append(c.auth, m)
 		return nil
 	}
 }
