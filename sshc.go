@@ -33,6 +33,7 @@ type DialConfig struct {
 	Password     string
 	Timeout      time.Duration
 	Wd           string
+	Auth         []ssh.AuthMethod
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -57,6 +58,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		UseAgent:     c.useAgent,
 		Password:     c.password,
 		Wd:           wd,
+		Auth:         c.auth,
 	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
@@ -126,6 +128,9 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 	if dc.Password != "" {
 		auth = append(auth, ssh.Password(dc.Password))
 	}
+
+	// additional ssh.AuthMethod
+	auth = append(auth, dc.Auth...)
 
 	cb, err := hostKeyCallback(dc.Knownhosts)
 	if err != nil {
