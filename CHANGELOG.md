@@ -1,5 +1,9 @@
 # Changelog
 
+## [v3.2.0](https://github.com/k1LoW/sshc/compare/v3.1.0...v3.2.0) - 2023-02-19
+- Support Windows ( use k1LoW/exec instead of direct syscall ) by @k1LoW in https://github.com/k1LoW/sshc/pull/35
+- Update go and pkgs by @k1LoW in https://github.com/k1LoW/sshc/pull/37
+
 ## [v3.1.0](https://github.com/k1LoW/sshc/compare/v3.0.1...v3.1.0) - 2023-02-10
 - Add `AuthMethod` option for appending ssh.AuthMethod by @k1LoW in https://github.com/k1LoW/sshc/pull/33
 
