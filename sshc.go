@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/ScaleFT/sshkeys"
+	"github.com/k1LoW/exec"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/knownhosts"
@@ -158,7 +157,6 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		unescapedProxyCommand := expandVerbs(proxyCommand, dc.User, dc.Port, dc.Hostname)
 		cmd := exec.Command("sh", "-c", unescapedProxyCommand) // #nosec
 		cmd.Dir = dc.Wd
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Stdin = server
 		cmd.Stdout = server
 		cmd.Stderr = os.Stderr
@@ -183,7 +181,9 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 			case err := <-errchan:
 				return nil, err
 			case <-time.After(30 * time.Second):
-				_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+				if err := exec.KillCommand(cmd); err != nil {
+					return nil, err
+				}
 				return nil, fmt.Errorf("proxy command timeout(30sec)")
 			case client := <-done:
 				return client, nil
