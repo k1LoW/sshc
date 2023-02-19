@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/ScaleFT/sshkeys v1.2.0
+	github.com/k1LoW/exec v0.2.0
 	github.com/kevinburke/ssh_config v1.2.0
 	golang.org/x/crypto v0.3.0
 	golang.org/x/term v0.2.0
