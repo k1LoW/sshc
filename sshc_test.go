@@ -67,8 +67,20 @@ func TestConfigPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	want := 3
+	want := 1
+	base, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range defaultConfigPaths {
+		ep, err := expandPath(p, base)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Lstat(ep); err == nil {
+			want++
+		}
+	}
 	if got := len(c.configs); got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
@@ -84,15 +96,29 @@ func TestAppendConfigPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	want := 3
+	want := 1
+	base, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range defaultConfigPaths {
+		ep, err := expandPath(p, base)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Lstat(ep); err == nil {
+			want++
+		}
+	}
 	if got := len(c.configs); got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
 
-	want2 := "~/.ssh/config"
-	if got := c.configs[0].key; got != want2 {
-		t.Fatalf("want = %#v, got = %#v", want2, got)
+	if want > 1 {
+		notwant := "./testdata/simple/.ssh/config"
+		if got := c.configs[0].key; got == notwant {
+			t.Fatalf("got = %#v", got)
+		}
 	}
 }
 
