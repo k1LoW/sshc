@@ -3,6 +3,7 @@ package sshc
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,7 +33,7 @@ type sshConfig struct {
 }
 
 type config struct {
-	key     string
+	path    string
 	content []byte
 }
 
@@ -73,19 +74,19 @@ func NewConfig(options ...Option) (*Config, error) {
 		return nil, err
 	}
 	for _, p := range defaultConfigPaths {
-		ep, err := expandPath(p, base)
+		p, err := expandPath(p, base)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := os.Lstat(ep); err != nil {
+		if _, err := os.Lstat(p); err != nil {
 			continue
 		}
-		b, err := os.ReadFile(ep)
+		b, err := os.ReadFile(p)
 		if err != nil {
 			return nil, err
 		}
 		c.configs = appendConfig(c.configs, config{
-			key:     p,
+			path:    p,
 			content: b,
 		})
 	}
@@ -122,7 +123,7 @@ func NewConfig(options ...Option) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.sshConfigs = append([]*sshConfig{{path: cc.key, sc: cfg}}, c.sshConfigs...)
+		c.sshConfigs = append([]*sshConfig{{path: cc.path, sc: cfg}}, c.sshConfigs...)
 	}
 
 	return c, nil
@@ -331,59 +332,96 @@ func Passphrase(p []byte) Option {
 	}
 }
 
-// ConfigPath is alias of UnshiftConfigPath.
+// ConfigData returns Option that unshift ssh_config data to Config.configs (alias of UnshiftConfigPath).
+func ConfigData(b []byte) Option {
+	return UnshiftConfigData(b)
+}
+
+// UnshiftConfigData returns Option that unshift ssh_config data to Config.configs.
+func UnshiftConfigData(b []byte) Option {
+	return func(c *Config) error {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		r := sha256.Sum256(b)
+		c.configs = unshiftConfig(c.configs, config{
+			path:    filepath.Join(wd, string(r[:])),
+			content: b,
+		})
+		return nil
+	}
+}
+
+// AppendConfigData returns Option that append ssh_config data to Config.configs.
+func AppendConfigData(b []byte) Option {
+	return func(c *Config) error {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		r := sha256.Sum256(b)
+		c.configs = appendConfig(c.configs, config{
+			path:    filepath.Join(wd, string(r[:])),
+			content: b,
+		})
+		return nil
+	}
+}
+
+// ConfigPath returns Option that unshift ssh_config path to Config.configs (alias of UnshiftConfigPath).
 func ConfigPath(p string) Option {
 	return UnshiftConfigPath(p)
 }
 
-// UnshiftConfigPath returns Option that unshift ssh_config path to Config.configpaths.
+// UnshiftConfigPath returns Option that unshift ssh_config path to Config.configs.
 func UnshiftConfigPath(p string) Option {
 	return func(c *Config) error {
 		base, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		ep, err := expandPath(p, base)
+		p, err := expandPath(p, base)
 		if err != nil {
 			return err
 		}
-		b, err := os.ReadFile(ep)
+		b, err := os.ReadFile(p)
 		if err != nil {
 			return err
 		}
 		c.configs = unshiftConfig(c.configs, config{
-			key:     p,
+			path:    p,
 			content: b,
 		})
 		return nil
 	}
 }
 
-// AppendConfigPath returns Option that append ssh_config path to Config.configpaths.
+// AppendConfigPath returns Option that append ssh_config path to Config.configs.
 func AppendConfigPath(p string) Option {
 	return func(c *Config) error {
 		base, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		ep, err := expandPath(p, base)
+		p, err := expandPath(p, base)
 		if err != nil {
 			return err
 		}
-		b, err := os.ReadFile(ep)
+		b, err := os.ReadFile(p)
 		if err != nil {
 			return err
 		}
 		c.configs = appendConfig(c.configs, config{
-			key:     p,
+			path:    p,
 			content: b,
 		})
 		return nil
 	}
 }
 
-// ClearConfigPath returns Option thet clear Config.configpaths,
-func ClearConfigPath() Option {
+// ClearConfig returns Option thet clear Config.configs,
+func ClearConfig() Option {
 	return func(c *Config) error {
 		c.configs = configs{}
 		return nil
@@ -430,8 +468,8 @@ func uniqueConfig(cs configs) configs {
 	keys := make(map[string]bool)
 	l := configs{}
 	for _, e := range cs {
-		if _, v := keys[e.key]; !v {
-			keys[e.key] = true
+		if _, v := keys[e.path]; !v {
+			keys[e.path] = true
 			l = append(l, e)
 		}
 	}
