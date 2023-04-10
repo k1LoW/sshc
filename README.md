@@ -1,4 +1,4 @@
-# sshc [![Build Status](https://github.com/k1LoW/sshc/workflows/build/badge.svg)](https://github.com/k1LoW/sshc/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/sshc/v3.svg)](https://pkg.go.dev/github.com/k1LoW/sshc/v3) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/ratio.svg)
+# sshc [![Build Status](https://github.com/k1LoW/sshc/workflows/build/badge.svg)](https://github.com/k1LoW/sshc/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/sshc/v4.svg)](https://pkg.go.dev/github.com/k1LoW/sshc/v4) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/ratio.svg)
 
 `sshc.NewClient()` returns `*ssh.Client` using [ssh_config(5)](https://linux.die.net/man/5/ssh_config)
 
@@ -23,7 +23,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.com/k1LoW/sshc/v3"
+	"github.com/k1LoW/sshc/v4"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 client, err := sshc.NewClient("myhost", User("k1low"), Port(1022))
 ```
 
-See [godoc page](https://pkg.go.dev/github.com/k1LoW/sshc/v3#Option)
+See [godoc page](https://pkg.go.dev/github.com/k1LoW/sshc/v4#Option)
 
 ## Supported ssh_config keywords
 
