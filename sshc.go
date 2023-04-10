@@ -19,20 +19,24 @@ import (
 	"golang.org/x/term"
 )
 
+type KeyAndPassphrase struct {
+	key        []byte
+	passphrase []byte
+}
+
 type DialConfig struct {
-	Hostname     string
-	User         string
-	Port         int
-	Passphrase   []byte
-	UseAgent     bool
-	Knownhosts   []string
-	IdentityKey  []byte
-	ProxyCommand string
-	ProxyJump    string
-	Password     string
-	Timeout      time.Duration
-	Wd           string
-	Auth         []ssh.AuthMethod
+	Hostname          string
+	User              string
+	Port              int
+	UseAgent          bool
+	Knownhosts        []string
+	KeyAndPassphrases []KeyAndPassphrase
+	ProxyCommand      string
+	ProxyJump         string
+	Password          string
+	Timeout           time.Duration
+	Wd                string
+	Auth              []ssh.AuthMethod
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -52,7 +56,6 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		User:         c.getUser(host),
 		ProxyCommand: pc,
 		ProxyJump:    c.Get(host, "ProxyJump"),
-		Passphrase:   c.passphrase,
 		Knownhosts:   c.knownhosts,
 		UseAgent:     c.useAgent,
 		Password:     c.password,
@@ -69,11 +72,11 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		return nil, err
 	}
 	dc.Port = port
-	key, err := c.getIdentityKey(host)
+	keys, err := c.getKeyAndPassphrases(host)
 	if err != nil {
 		return nil, err
 	}
-	dc.IdentityKey = key
+	dc.KeyAndPassphrases = keys
 
 	return Dial(dc)
 }
@@ -82,13 +85,12 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 func Dial(dc *DialConfig) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", dc.Hostname, dc.Port)
 	var (
-		signer ssh.Signer
-		err    error
+		signers []ssh.Signer
+		err     error
 	)
 	auth := []ssh.AuthMethod{}
-	if dc.IdentityKey != nil {
-		key := dc.IdentityKey
-		signer, err = sshkeys.ParseEncryptedPrivateKey(key, dc.Passphrase)
+	for _, k := range dc.KeyAndPassphrases {
+		signer, err := sshkeys.ParseEncryptedPrivateKey(k.key, k.passphrase)
 		if err != nil {
 			// passphrase
 			fmt.Print("Enter passphrase for key: ")
@@ -97,14 +99,16 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 				fmt.Println("")
 				return nil, err
 			}
-			signer, err = sshkeys.ParseEncryptedPrivateKey(key, passPhrase)
+			signer, err = sshkeys.ParseEncryptedPrivateKey(k.key, passPhrase)
 			if err != nil {
 				fmt.Println("")
 				return nil, err
 			}
 			fmt.Println("")
 		}
+		signers = append(signers, signer)
 	}
+	useAgent := false
 	if dc.UseAgent && sshAuthSockExists() {
 		sshAgentClient, err := newSSHAgentClient()
 		if err != nil {
@@ -116,11 +120,11 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		}
 		if len(identities) > 0 {
 			auth = append(auth, ssh.PublicKeysCallback(sshAgentClient.Signers))
-		} else if signer != nil {
-			auth = append(auth, ssh.PublicKeys(signer))
+			useAgent = true
 		}
-	} else if signer != nil {
-		auth = append(auth, ssh.PublicKeys(signer))
+	}
+	if len(signers) > 0 && !useAgent {
+		auth = append(auth, ssh.PublicKeys(signers...))
 	}
 
 	// password

@@ -11,8 +11,11 @@ import (
 	"strings"
 
 	"github.com/kevinburke/ssh_config"
+	"github.com/minio/pkg/wildcard"
 	"golang.org/x/crypto/ssh"
 )
+
+const hostAny = "*"
 
 var (
 	defaultConfigPaths = []string{
@@ -35,19 +38,25 @@ type config struct {
 
 type configs []config
 
+type identityKey struct {
+	pattern    string
+	key        []byte
+	passphrase []byte
+}
+
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
-	configs     configs
-	hostname    string
-	user        string
-	port        int
-	identityKey []byte
-	passphrase  []byte
-	useAgent    bool
-	sshConfigs  []*sshConfig
-	knownhosts  []string
-	password    string
-	auth        []ssh.AuthMethod
+	configs      configs
+	hostname     string
+	user         string
+	port         int
+	identityKeys []identityKey
+	passphrase   []byte
+	useAgent     bool
+	sshConfigs   []*sshConfig
+	knownhosts   []string
+	password     string
+	auth         []ssh.AuthMethod
 }
 
 // Option is the type for change Config.
@@ -187,9 +196,17 @@ func (c *Config) getHostname(host string) (string, error) {
 	return h, nil
 }
 
-func (c *Config) getIdentityKey(host string) ([]byte, error) {
-	if c.identityKey != nil {
-		return c.identityKey, nil
+func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
+	keys := []KeyAndPassphrase{}
+	if len(c.identityKeys) > 0 {
+		for _, i := range c.identityKeys {
+			if wildcard.MatchSimple(i.pattern, host) {
+				keys = append(keys, KeyAndPassphrase{
+					key:        i.key,
+					passphrase: i.passphrase,
+				})
+			}
+		}
 	}
 
 	user := c.getUser(host)
@@ -217,7 +234,15 @@ func (c *Config) getIdentityKey(host string) ([]byte, error) {
 		}
 	}
 
-	return os.ReadFile(keyPath)
+	b, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+	keys = append(keys, KeyAndPassphrase{
+		key:        b,
+		passphrase: c.passphrase,
+	})
+	return keys, nil
 }
 
 func (c *Config) getProxyCommand(host string) (string, string) {
@@ -248,22 +273,52 @@ func Hostname(h string) Option {
 	}
 }
 
-// IdentityFile returns Option that set Config.identityKey for override SSH client identity file.
-func IdentityFile(p string) Option {
+// IdentityFile returns Option that append to Config.identityKeys for SSH client identity file.
+func IdentityFile(f string, hostPatterns ...string) Option {
 	return func(c *Config) error {
-		key, err := os.ReadFile(filepath.Clean(p))
-		if err != nil {
-			return err
-		}
-		c.identityKey = key
-		return nil
+		opt := IdentityFileWithPassphrase(f, nil, hostPatterns...)
+		return opt(c)
 	}
 }
 
-// IdentityKey returns Option that set Config.identityKey for override SSH client identity file.
-func IdentityKey(b []byte) Option {
+// IdentityFileWithPassphrase returns Option that append to Config.identityKeys for SSH client identity file.
+func IdentityFileWithPassphrase(f string, passphrase []byte, hostPatterns ...string) Option {
 	return func(c *Config) error {
-		c.identityKey = b
+		b, err := os.ReadFile(filepath.Clean(f))
+		if err != nil {
+			return err
+		}
+		opt := IdentityKeyWithPassphrase(b, passphrase, hostPatterns...)
+		return opt(c)
+	}
+}
+
+// IdentityKey returns Option that append to Config.identityKeys for SSH client identity file.
+func IdentityKey(b []byte, hostPatterns ...string) Option {
+	return func(c *Config) error {
+		opt := IdentityKeyWithPassphrase(b, nil, hostPatterns...)
+		return opt(c)
+	}
+}
+
+// IdentityKeyWithPassphrase returns Option that append to Config.identityKeys for SSH client identity file.
+func IdentityKeyWithPassphrase(b, passphrase []byte, hostPatterns ...string) Option {
+	return func(c *Config) error {
+		if len(hostPatterns) == 0 {
+			c.identityKeys = append(c.identityKeys, identityKey{
+				pattern:    hostAny,
+				key:        b,
+				passphrase: passphrase,
+			})
+		} else {
+			for _, pattern := range hostPatterns {
+				c.identityKeys = append(c.identityKeys, identityKey{
+					pattern:    pattern,
+					key:        b,
+					passphrase: passphrase,
+				})
+			}
+		}
 		return nil
 	}
 }
