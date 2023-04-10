@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const petternAny = "*"
+const hostAny = "*"
 
 var (
 	defaultConfigPaths = []string{
@@ -306,7 +306,7 @@ func IdentityKeyWithPassphrase(b, passphrase []byte, hostPatterns ...string) Opt
 	return func(c *Config) error {
 		if len(hostPatterns) == 0 {
 			c.identityKeys = append(c.identityKeys, identityKey{
-				pattern:    petternAny,
+				pattern:    hostAny,
 				key:        b,
 				passphrase: passphrase,
 			})
