@@ -29,7 +29,7 @@ func TestPort(t *testing.T) {
 
 	{
 		want := 12345
-		c, err := NewConfig(ClearConfigPath(), ConfigPath("./testdata/simple/ssh_config"), Port(want))
+		c, err := NewConfig(ClearConfigPath(), Port(want))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -63,52 +63,52 @@ func TestPassphrase(t *testing.T) {
 }
 
 func TestConfigPath(t *testing.T) {
-	c, err := NewConfig(ConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(ConfigPath("./testdata/simple/.ssh/config"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := 3
-	if got := len(c.configPaths); got != want {
+	if got := len(c.configs); got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
 
-	want2 := "/path/to/ssh_config"
-	if got := c.configPaths[0]; got != want2 {
+	want2 := "./testdata/simple/.ssh/config"
+	if got := c.configs[0].key; got != want2 {
 		t.Fatalf("want = %#v, got = %#v", want2, got)
 	}
 }
 
 func TestAppendConfigPath(t *testing.T) {
-	c, err := NewConfig(AppendConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(AppendConfigPath("./testdata/simple/.ssh/config"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := 3
-	if got := len(c.configPaths); got != want {
+	if got := len(c.configs); got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
 
 	want2 := "~/.ssh/config"
-	if got := c.configPaths[0]; got != want2 {
+	if got := c.configs[0].key; got != want2 {
 		t.Fatalf("want = %#v, got = %#v", want2, got)
 	}
 }
 
 func TestClearConfigPath(t *testing.T) {
-	c, err := NewConfig(ClearConfigPath(), ConfigPath("/path/to/ssh_config"))
+	c, err := NewConfig(ClearConfigPath(), ConfigPath("./testdata/simple/.ssh/config"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := 1
-	if got := len(c.configPaths); got != want {
+	if got := len(c.configs); got != want {
 		t.Fatalf("want = %#v, got = %#v", want, got)
 	}
 
-	want2 := "/path/to/ssh_config"
-	if got := c.configPaths[0]; got != want2 {
+	want2 := "./testdata/simple/.ssh/config"
+	if got := c.configs[0].key; got != want2 {
 		t.Fatalf("want = %#v, got = %#v", want2, got)
 	}
 }

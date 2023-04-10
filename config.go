@@ -28,9 +28,16 @@ type sshConfig struct {
 	path string
 }
 
+type config struct {
+	key     string
+	content []byte
+}
+
+type configs []config
+
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
-	configPaths []string
+	configs     configs
 	hostname    string
 	user        string
 	port        int
@@ -50,8 +57,28 @@ type Option func(*Config) error
 func NewConfig(options ...Option) (*Config, error) {
 	var err error
 	c := &Config{
-		configPaths: defaultConfigPaths,
-		useAgent:    true, // Default is true
+		useAgent: true, // Default is true
+	}
+	base, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range defaultConfigPaths {
+		ep, err := expandPath(p, base)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := os.Lstat(ep); err != nil {
+			continue
+		}
+		b, err := os.ReadFile(ep)
+		if err != nil {
+			return nil, err
+		}
+		c.configs = appendConfig(c.configs, config{
+			key:     p,
+			content: b,
+		})
 	}
 	for _, option := range options {
 		err = option(c)
@@ -64,19 +91,9 @@ func NewConfig(options ...Option) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	for _, p := range c.configPaths {
-		cPath := filepath.Clean(strings.Replace(p, "~", homeDir, 1))
-		if _, err := os.Lstat(cPath); err != nil {
-			continue
-		}
-		f, err := os.Open(cPath)
-		if err != nil {
-			return nil, err
-		}
-
+	for _, cc := range c.configs {
 		buf := new(bytes.Buffer)
-		s := bufio.NewScanner(f)
+		s := bufio.NewScanner(bytes.NewReader(cc.content))
 		for s.Scan() {
 			line := s.Bytes()
 
@@ -96,7 +113,7 @@ func NewConfig(options ...Option) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.sshConfigs = append([]*sshConfig{{path: cPath, sc: cfg}}, c.sshConfigs...)
+		c.sshConfigs = append([]*sshConfig{{path: cc.key, sc: cfg}}, c.sshConfigs...)
 	}
 
 	return c, nil
@@ -267,7 +284,22 @@ func ConfigPath(p string) Option {
 // UnshiftConfigPath returns Option that unshift ssh_config path to Config.configpaths.
 func UnshiftConfigPath(p string) Option {
 	return func(c *Config) error {
-		c.configPaths = unique(append([]string{p}, c.configPaths...))
+		base, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		ep, err := expandPath(p, base)
+		if err != nil {
+			return err
+		}
+		b, err := os.ReadFile(ep)
+		if err != nil {
+			return err
+		}
+		c.configs = unshiftConfig(c.configs, config{
+			key:     p,
+			content: b,
+		})
 		return nil
 	}
 }
@@ -275,7 +307,22 @@ func UnshiftConfigPath(p string) Option {
 // AppendConfigPath returns Option that append ssh_config path to Config.configpaths.
 func AppendConfigPath(p string) Option {
 	return func(c *Config) error {
-		c.configPaths = unique(append(c.configPaths, p))
+		base, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		ep, err := expandPath(p, base)
+		if err != nil {
+			return err
+		}
+		b, err := os.ReadFile(ep)
+		if err != nil {
+			return err
+		}
+		c.configs = appendConfig(c.configs, config{
+			key:     p,
+			content: b,
+		})
 		return nil
 	}
 }
@@ -283,7 +330,7 @@ func AppendConfigPath(p string) Option {
 // ClearConfigPath returns Option thet clear Config.configpaths,
 func ClearConfigPath() Option {
 	return func(c *Config) error {
-		c.configPaths = []string{}
+		c.configs = configs{}
 		return nil
 	}
 }
@@ -320,16 +367,24 @@ func AuthMethod(m ssh.AuthMethod) Option {
 	}
 }
 
-func unique(s []string) []string {
+func appendConfig(cs configs, c config) configs {
+	return uniqueConfig(append(cs, c))
+}
+
+func uniqueConfig(cs configs) configs {
 	keys := make(map[string]bool)
-	l := []string{}
-	for _, e := range s {
-		if _, v := keys[e]; !v {
-			keys[e] = true
+	l := configs{}
+	for _, e := range cs {
+		if _, v := keys[e.key]; !v {
+			keys[e.key] = true
 			l = append(l, e)
 		}
 	}
 	return l
+}
+
+func unshiftConfig(cs configs, c config) configs {
+	return uniqueConfig(append(configs{c}, cs...))
 }
 
 func expandPath(path, base string) (string, error) {
