@@ -1,5 +1,11 @@
 # Changelog
 
+## [v4.0.0](https://github.com/k1LoW/sshc/compare/v3.2.0...v4.0.0) - 2023-04-10
+- [BREAKING CHANGE] Error if non-existent config path is specified by @k1LoW in https://github.com/k1LoW/sshc/pull/38
+- Update pkgs by @k1LoW in https://github.com/k1LoW/sshc/pull/40
+- [BREAKING CHANGE] Support for multiple identity keys and passphrases by @k1LoW in https://github.com/k1LoW/sshc/pull/41
+- [BREAKING CHANGE] Add options for adding ssh_config data by @k1LoW in https://github.com/k1LoW/sshc/pull/42
+
 ## [v3.2.0](https://github.com/k1LoW/sshc/compare/v3.1.0...v3.2.0) - 2023-02-19
 - Support Windows ( use k1LoW/exec instead of direct syscall ) by @k1LoW in https://github.com/k1LoW/sshc/pull/35
 - Update go and pkgs by @k1LoW in https://github.com/k1LoW/sshc/pull/37
