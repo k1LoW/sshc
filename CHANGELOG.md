@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.0.1](https://github.com/k1LoW/sshc/compare/v4.0.0...v4.0.1) - 2023-04-12
+- Allow use of specified key without ~/.ssh/id_rsa by @k1LoW in https://github.com/k1LoW/sshc/pull/43
+
 ## [v4.0.0](https://github.com/k1LoW/sshc/compare/v3.2.0...v4.0.0) - 2023-04-10
 - [BREAKING CHANGE] Error if non-existent config path is specified by @k1LoW in https://github.com/k1LoW/sshc/pull/38
 - Update pkgs by @k1LoW in https://github.com/k1LoW/sshc/pull/40
