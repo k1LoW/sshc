@@ -234,7 +234,9 @@ func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
 			}
 		}
 	}
-
+	if _, err := os.Lstat(keyPath); err != nil {
+		return keys, nil
+	}
 	b, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
