@@ -45,19 +45,26 @@ type identityKey struct {
 	passphrase []byte
 }
 
+type identityFile struct {
+	pattern    string
+	path       string
+	passphrase []byte
+}
+
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
-	configs      configs
-	hostname     string
-	user         string
-	port         int
-	identityKeys []identityKey
-	passphrase   []byte
-	useAgent     bool
-	sshConfigs   []*sshConfig
-	knownhosts   []string
-	password     string
-	auth         []ssh.AuthMethod
+	configs       configs
+	hostname      string
+	user          string
+	port          int
+	identityFiles []identityFile
+	identityKeys  []identityKey
+	passphrase    []byte
+	useAgent      bool
+	sshConfigs    []*sshConfig
+	knownhosts    []string
+	password      string
+	auth          []ssh.AuthMethod
 }
 
 // Option is the type for change Config.
@@ -208,6 +215,19 @@ func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
 				})
 			}
 		}
+		for _, i := range c.identityFiles {
+			if wildcard.MatchSimple(i.pattern, host) {
+				b, err := os.ReadFile(i.path)
+				if err != nil {
+					return nil, err
+				}
+				keys = append(keys, KeyAndPassphrase{
+					path:       i.path,
+					key:        b,
+					passphrase: i.passphrase,
+				})
+			}
+		}
 	}
 
 	user := c.getUser(host)
@@ -244,6 +264,7 @@ func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
 	keys = append(keys, KeyAndPassphrase{
 		key:        b,
 		passphrase: c.passphrase,
+		path:       keyPath,
 	})
 	return keys, nil
 }
@@ -287,12 +308,22 @@ func IdentityFile(f string, hostPatterns ...string) Option {
 // IdentityFileWithPassphrase returns Option that append to Config.identityKeys for SSH client identity file.
 func IdentityFileWithPassphrase(f string, passphrase []byte, hostPatterns ...string) Option {
 	return func(c *Config) error {
-		b, err := os.ReadFile(filepath.Clean(f))
-		if err != nil {
-			return err
+		if len(hostPatterns) == 0 {
+			c.identityFiles = append(c.identityFiles, identityFile{
+				pattern:    hostAny,
+				path:       f,
+				passphrase: passphrase,
+			})
+		} else {
+			for _, pattern := range hostPatterns {
+				c.identityFiles = append(c.identityFiles, identityFile{
+					pattern:    pattern,
+					path:       f,
+					passphrase: passphrase,
+				})
+			}
 		}
-		opt := IdentityKeyWithPassphrase(b, passphrase, hostPatterns...)
-		return opt(c)
+		return nil
 	}
 }
 
