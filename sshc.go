@@ -22,6 +22,7 @@ import (
 type KeyAndPassphrase struct {
 	key        []byte
 	passphrase []byte
+	path       string
 }
 
 type DialConfig struct {
