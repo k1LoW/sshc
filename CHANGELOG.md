@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.1.0](https://github.com/k1LoW/sshc/compare/v4.0.1...v4.1.0) - 2023-06-11
+- Store key path in KeyAndPassphrase by @k1LoW in https://github.com/k1LoW/sshc/pull/45
+
 ## [v4.0.1](https://github.com/k1LoW/sshc/compare/v4.0.0...v4.0.1) - 2023-04-12
 - Allow use of specified key without ~/.ssh/id_rsa by @k1LoW in https://github.com/k1LoW/sshc/pull/43
 
