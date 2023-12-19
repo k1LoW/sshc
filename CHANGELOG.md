@@ -1,5 +1,9 @@
 # Changelog
 
+## [v4.1.1](https://github.com/k1LoW/sshc/compare/v4.1.0...v4.1.1) - 2023-12-19
+- Bump golang.org/x/crypto from 0.8.0 to 0.17.0 in /example/ssh by @dependabot in https://github.com/k1LoW/sshc/pull/47
+- Bump golang.org/x/crypto from 0.8.0 to 0.17.0 by @dependabot in https://github.com/k1LoW/sshc/pull/49
+
 ## [v4.1.0](https://github.com/k1LoW/sshc/compare/v4.0.1...v4.1.0) - 2023-06-11
 - Store key path in KeyAndPassphrase by @k1LoW in https://github.com/k1LoW/sshc/pull/45
 
