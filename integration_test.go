@@ -93,8 +93,8 @@ func TestSSH(t *testing.T) {
 func TestDialTimeoutFunc(t *testing.T) {
 	opts := []Option{
 		ConfigPath("./testdata/ssh_config"),
-		DialTimeoutFunc(func(network, addr string, timeout time.Duration) (net.Conn, error) {
-			addr = "127.0.0.1:9022"
+		DialTimeoutFunc(func(network, _ string, timeout time.Duration) (net.Conn, error) {
+			addr := "127.0.0.1:9022"
 			return net.DialTimeout(network, addr, timeout)
 		}),
 		UseAgent(false),
