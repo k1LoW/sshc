@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kevinburke/ssh_config"
 	"github.com/minio/pkg/wildcard"
@@ -53,18 +55,19 @@ type identityFile struct {
 
 // Config is the type for the SSH Client config. not ssh_config.
 type Config struct {
-	configs       configs
-	hostname      string
-	user          string
-	port          int
-	identityFiles []identityFile
-	identityKeys  []identityKey
-	passphrase    []byte
-	useAgent      bool
-	sshConfigs    []*sshConfig
-	knownhosts    []string
-	password      string
-	auth          []ssh.AuthMethod
+	configs         configs
+	hostname        string
+	user            string
+	port            int
+	identityFiles   []identityFile
+	identityKeys    []identityKey
+	passphrase      []byte
+	useAgent        bool
+	sshConfigs      []*sshConfig
+	knownhosts      []string
+	password        string
+	auth            []ssh.AuthMethod
+	dialTimeoutFunc func(network, addr string, timeout time.Duration) (net.Conn, error)
 }
 
 // Option is the type for change Config.
@@ -361,6 +364,14 @@ func IdentityKeyWithPassphrase(b, passphrase []byte, hostPatterns ...string) Opt
 func Passphrase(p []byte) Option {
 	return func(c *Config) error {
 		c.passphrase = p
+		return nil
+	}
+}
+
+// DialTimeoutFunc returns Option that set Config.dialTimeoutFunc for set SSH client dial func
+func DialTimeoutFunc(fn func(network, addr string, timeout time.Duration) (net.Conn, error)) Option {
+	return func(c *Config) error {
+		c.dialTimeoutFunc = fn
 		return nil
 	}
 }

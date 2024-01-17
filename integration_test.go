@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 )
 
 var integration = flag.Bool("integration", false, "run integration tests")
@@ -86,6 +88,39 @@ func TestSSH(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestDialTimeoutFunc(t *testing.T) {
+	opts := []Option{
+		ConfigPath("./testdata/ssh_config"),
+		DialTimeoutFunc(func(network, _ string, timeout time.Duration) (net.Conn, error) {
+			addr := "127.0.0.1:9022"
+			return net.DialTimeout(network, addr, timeout)
+		}),
+		UseAgent(false),
+	}
+	client, err := NewClient("ssh.example.com", opts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := client.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+
+	var stdout = &bytes.Buffer{}
+	session.Stdout = stdout
+	cmd := "hostname"
+	if err := session.Run(cmd); err != nil {
+		t.Fatal(err)
+	}
+
+	got := stdout.String()
+	want := "bastion\n"
+	if got != want {
+		t.Errorf("want = %#v, got = %#v", want, got)
+	}
 }
 
 func getHostname(dest string, useAgent bool, sudo bool) (string, error) {
