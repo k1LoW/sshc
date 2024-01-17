@@ -97,6 +97,7 @@ func TestDialTimeoutFunc(t *testing.T) {
 			addr = "127.0.0.1:9022"
 			return net.DialTimeout(network, addr, timeout)
 		}),
+		UseAgent(false),
 	}
 	client, err := NewClient("ssh.example.com", opts...)
 	if err != nil {

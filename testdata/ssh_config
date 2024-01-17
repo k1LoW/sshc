@@ -11,6 +11,11 @@ Host server
   IdentityFile id_rsa
   ProxyCommand ssh -W %h:%p bastion -F ssh_config
 
+Host ssh.example.com
+  HostName ssh.example.com
+  User k1low
+  IdentityFile id_rsa
+
 Host simple
 
 Host *
