@@ -38,6 +38,7 @@ type DialConfig struct {
 	Timeout           time.Duration
 	Wd                string
 	Auth              []ssh.AuthMethod
+	DialTimeoutFunc   func(network, addr string, timeout time.Duration) (net.Conn, error)
 }
 
 // NewClient reads ssh_config(5) ( Default is ~/.ssh/config and /etc/ssh/ssh_config ) and returns *ssh.Client.
@@ -54,14 +55,15 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 		}
 	}
 	dc := &DialConfig{
-		User:         c.getUser(host),
-		ProxyCommand: pc,
-		ProxyJump:    c.Get(host, "ProxyJump"),
-		Knownhosts:   c.knownhosts,
-		UseAgent:     c.useAgent,
-		Password:     c.password,
-		Wd:           wd,
-		Auth:         c.auth,
+		User:            c.getUser(host),
+		ProxyCommand:    pc,
+		ProxyJump:       c.Get(host, "ProxyJump"),
+		Knownhosts:      c.knownhosts,
+		UseAgent:        c.useAgent,
+		Password:        c.password,
+		Wd:              wd,
+		Auth:            c.auth,
+		DialTimeoutFunc: c.dialTimeoutFunc,
 	}
 	hostname, err := c.getHostname(host)
 	if err != nil {
@@ -196,7 +198,20 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		}
 
 	}
-	return ssh.Dial("tcp", addr, sshConfig)
+	network := "tcp"
+	if dc.DialTimeoutFunc == nil {
+		return ssh.Dial(network, addr, sshConfig)
+	}
+	// expand ssh.Dial with DialTimeoutFunc
+	conn, err := dc.DialTimeoutFunc(network, addr, sshConfig.Timeout)
+	if err != nil {
+		return nil, err
+	}
+	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.NewClient(c, chans, reqs), nil
 }
 
 func newSSHAgentClient() (agent.ExtendedAgent, error) {
