@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.2.0](https://github.com/k1LoW/sshc/compare/v4.1.1...v4.2.0) - 2024-01-17
+- Add DialTimeoutFunc option by @k1LoW in https://github.com/k1LoW/sshc/pull/50
+
 ## [v4.1.1](https://github.com/k1LoW/sshc/compare/v4.1.0...v4.1.1) - 2023-12-19
 - Bump golang.org/x/crypto from 0.8.0 to 0.17.0 in /example/ssh by @dependabot in https://github.com/k1LoW/sshc/pull/47
 - Bump golang.org/x/crypto from 0.8.0 to 0.17.0 by @dependabot in https://github.com/k1LoW/sshc/pull/49
