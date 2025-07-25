@@ -1,5 +1,7 @@
 # Changelog
 
+## [v4.2.1](https://github.com/k1LoW/sshc/compare/v4.2.0...v4.2.1) - 2025-07-25
+
 ## [v4.2.0](https://github.com/k1LoW/sshc/compare/v4.1.1...v4.2.0) - 2024-01-17
 - Add DialTimeoutFunc option by @k1LoW in https://github.com/k1LoW/sshc/pull/50
 
