@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
@@ -25,8 +25,8 @@ jobs:
         run: |
             sudo chmod 600 ./testdata/id_rsa
             sudo chmod 600 ./testdata/id_rsa.pub
-            docker-compose up -d
-            while [ `docker-compose logs | grep -c 'Server listening'` -ne 4 ]; do sleep 1; echo 'sleeping'; done;
+            docker compose up -d
+            while [ `docker compose logs | grep -c 'Server listening'` -ne 4 ]; do sleep 1; echo 'sleeping'; done;
             sudo chmod 600 ./testdata/id_rsa
             sudo chmod 600 ./testdata/id_rsa.pub
             cd ./testdata
@@ -40,4 +40,4 @@ jobs:
         run: make ci
 
       - name: Run octocov
-        uses: k1LoW/octocov-action@v0
+        uses: k1LoW/octocov-action@v1
