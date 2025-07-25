@@ -368,7 +368,7 @@ func Passphrase(p []byte) Option {
 	}
 }
 
-// DialTimeoutFunc returns Option that set Config.dialTimeoutFunc for set SSH client dial func
+// DialTimeoutFunc returns Option that set Config.dialTimeoutFunc for set SSH client dial func.
 func DialTimeoutFunc(fn func(network, addr string, timeout time.Duration) (net.Conn, error)) Option {
 	return func(c *Config) error {
 		c.dialTimeoutFunc = fn
@@ -464,7 +464,7 @@ func AppendConfigPath(p string) Option {
 	}
 }
 
-// ClearConfig returns Option thet clear Config.configs,
+// ClearConfig returns Option that clear Config.configs.
 func ClearConfig() Option {
 	return func(c *Config) error {
 		c.configs = configs{}
@@ -488,7 +488,7 @@ func Knownhosts(files ...string) Option {
 	}
 }
 
-// Password returns Option that override Config.password
+// Password returns Option that override Config.password.
 func Password(pass string) Option {
 	return func(c *Config) error {
 		c.password = pass
@@ -496,7 +496,7 @@ func Password(pass string) Option {
 	}
 }
 
-// AuthMethod returns Option that append ssh.AuthMethod to Config.auth
+// AuthMethod returns Option that append ssh.AuthMethod to Config.auth.
 func AuthMethod(m ssh.AuthMethod) Option {
 	return func(c *Config) error {
 		c.auth = append(c.auth, m)

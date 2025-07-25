@@ -84,7 +84,7 @@ func NewClient(host string, options ...Option) (*ssh.Client, error) {
 	return Dial(dc)
 }
 
-// Dial returns *ssh.Client using Config
+// Dial returns *ssh.Client using Config.
 func Dial(dc *DialConfig) (*ssh.Client, error) {
 	addr := fmt.Sprintf("%s:%d", dc.Hostname, dc.Port)
 	var (
@@ -169,7 +169,7 @@ func Dial(dc *DialConfig) (*ssh.Client, error) {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Start(); err != nil {
-			return nil, fmt.Errorf("proxy command:%s error:%s", unescapedProxyCommand, err)
+			return nil, fmt.Errorf("proxy command:%s error:%w", unescapedProxyCommand, err)
 		}
 
 		done := make(chan *ssh.Client)
@@ -248,9 +248,9 @@ func parseProxyJump(text string) (string, error) {
 }
 
 func expandVerbs(v, user string, port int, hostname string) string {
-	v = strings.Replace(v, "%h", hostname, -1)
-	v = strings.Replace(v, "%p", strconv.Itoa(port), -1)
-	v = strings.Replace(v, "%r", user, -1)
+	v = strings.ReplaceAll(v, "%h", hostname)
+	v = strings.ReplaceAll(v, "%p", strconv.Itoa(port))
+	v = strings.ReplaceAll(v, "%r", user)
 	return v
 }
 
