@@ -1,3 +1,5 @@
+github.com/IGLOU-EU/go-wildcard/v2 v2.1.0 h1:WFqyYAuIYLJ6mHZ4rp/bYXiR4E1IvXW4+zInYWdQBqI=
+github.com/IGLOU-EU/go-wildcard/v2 v2.1.0/go.mod h1:/sUMQ5dk2owR0ZcjRI/4AZ+bUFF5DxGCQrDMNBXUf5o=
 github.com/ScaleFT/sshkeys v1.4.0 h1:Yqd0cKA5PUvwV0dgRI67BDHGTsMHtGQBZbLXh1dthmE=
 github.com/ScaleFT/sshkeys v1.4.0/go.mod h1:GineMkS8SEiELq8q5DzA2Wnrw65SqdD9a+hm8JOU1I4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -9,8 +11,6 @@ github.com/k1LoW/exec v0.3.0 h1:lNUqhF5IXhm2aDKcaWxhGwYC/WLcCbLOqoe97oxW1XQ=
 github.com/k1LoW/exec v0.3.0/go.mod h1:LSd4t5/1qGJHUdB2RUtoHuHfaZ3ks+BfQ+sGHzvwhnE=
 github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=
 github.com/kevinburke/ssh_config v1.2.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
-github.com/minio/pkg v1.7.5 h1:UOUJjewE5zoaDPlCMJtNx/swc1jT1ZR+IajT7hrLd44=
-github.com/minio/pkg v1.7.5/go.mod h1:mEfGMTm5Z0b5EGxKNuPwyb5A2d+CC/VlUyRj6RJtIwo=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
+	wildcard "github.com/IGLOU-EU/go-wildcard/v2"
 	"github.com/kevinburke/ssh_config"
-	"github.com/minio/pkg/wildcard"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -211,7 +211,7 @@ func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
 	keys := []KeyAndPassphrase{}
 	if len(c.identityKeys) > 0 {
 		for _, i := range c.identityKeys {
-			if wildcard.MatchSimple(i.pattern, host) {
+			if wildcard.Match(i.pattern, host) {
 				keys = append(keys, KeyAndPassphrase{
 					key:        i.key,
 					passphrase: i.passphrase,
@@ -219,7 +219,7 @@ func (c *Config) getKeyAndPassphrases(host string) ([]KeyAndPassphrase, error) {
 			}
 		}
 		for _, i := range c.identityFiles {
-			if wildcard.MatchSimple(i.pattern, host) {
+			if wildcard.Match(i.pattern, host) {
 				b, err := os.ReadFile(i.path)
 				if err != nil {
 					return nil, err
