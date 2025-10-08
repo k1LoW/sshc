@@ -1,5 +1,9 @@
 # Changelog
 
+## [v4.3.0](https://github.com/k1LoW/sshc/compare/v4.2.1...v4.3.0) - 2025-10-08
+- fix: use go-wildcard instead by @k1LoW in https://github.com/k1LoW/sshc/pull/54
+- Bump golang.org/x/crypto from 0.17.0 to 0.35.0 in /example/ssh by @dependabot[bot] in https://github.com/k1LoW/sshc/pull/56
+
 ## [v4.2.1](https://github.com/k1LoW/sshc/compare/v4.2.0...v4.2.1) - 2025-07-25
 
 ## [v4.2.0](https://github.com/k1LoW/sshc/compare/v4.1.1...v4.2.0) - 2024-01-17
