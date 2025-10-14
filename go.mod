@@ -17,3 +17,6 @@ require (
 	github.com/stretchr/testify v1.8.2 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 )
+
+// Licensing error. ref: https://github.com/k1LoW/sshc/issues/57
+retract [v4.0.0, v4.2.1]
