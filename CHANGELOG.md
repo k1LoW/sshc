@@ -1,5 +1,11 @@
 # Changelog
 
+## [v4.3.2](https://github.com/k1LoW/sshc/compare/v4.3.1...v4.3.2) - 2025-11-20
+- chore: setup tagpr labels by @k1LoW in https://github.com/k1LoW/sshc/pull/61
+- Revert "chore: setup tagpr labels" by @k1LoW in https://github.com/k1LoW/sshc/pull/63
+- chore: setup tagpr labels by @k1LoW in https://github.com/k1LoW/sshc/pull/64
+- chore(deps): bump golang.org/x/crypto from 0.40.0 to 0.45.0 by @dependabot[bot] in https://github.com/k1LoW/sshc/pull/65
+
 ## [v4.3.1](https://github.com/k1LoW/sshc/compare/v4.3.0...v4.3.1) - 2025-10-14
 - test: add check license using go-licenses by @k1LoW in https://github.com/k1LoW/sshc/pull/59
 - fix: retract versions by @k1LoW in https://github.com/k1LoW/sshc/pull/60
