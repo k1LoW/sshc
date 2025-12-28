@@ -1,8 +1,3 @@
-> [!CAUTION]
-> **Correction of Licensing Error and Request for Action**<br>
-> **Please upgrade version to v4.3.0 or later**<br>
-> For details, see https://github.com/k1LoW/sshc/issues/57
-
 # sshc [![Build Status](https://github.com/k1LoW/sshc/workflows/build/badge.svg)](https://github.com/k1LoW/sshc/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/sshc/v4.svg)](https://pkg.go.dev/github.com/k1LoW/sshc/v4) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/sshc/ratio.svg)
 
 `sshc.NewClient()` returns `*ssh.Client` using [ssh_config(5)](https://linux.die.net/man/5/ssh_config)
