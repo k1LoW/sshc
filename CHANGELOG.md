@@ -1,5 +1,7 @@
 # Changelog
 
+## [v4.3.3](https://github.com/k1LoW/sshc/compare/v4.3.2...v4.3.3) - 2025-12-28
+
 ## [v4.3.2](https://github.com/k1LoW/sshc/compare/v4.3.1...v4.3.2) - 2025-11-20
 - chore: setup tagpr labels by @k1LoW in https://github.com/k1LoW/sshc/pull/61
 - Revert "chore: setup tagpr labels" by @k1LoW in https://github.com/k1LoW/sshc/pull/63
