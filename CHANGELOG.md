@@ -1,5 +1,10 @@
 # Changelog
 
+## [v4.3.3](https://github.com/k1LoW/sshc/compare/v4.3.2...v4.3.3) - 2026-07-10
+
+- chore(deps): bump golang.org/x/crypto from 0.40.0 to 0.52.0 in /example/ssh by @dependabot[bot] in https://github.com/k1LoW/sshc/pull/67
+- chore(deps): bump golang.org/x/crypto from 0.45.0 to 0.52.0 by @dependabot[bot] in https://github.com/k1LoW/sshc/pull/68
+
 ## [v4.3.2](https://github.com/k1LoW/sshc/compare/v4.3.1...v4.3.2) - 2025-11-20
 - chore: setup tagpr labels by @k1LoW in https://github.com/k1LoW/sshc/pull/61
 - Revert "chore: setup tagpr labels" by @k1LoW in https://github.com/k1LoW/sshc/pull/63
