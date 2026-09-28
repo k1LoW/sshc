@@ -1,5 +1,9 @@
 # Changelog
 
+## [v4.3.4](https://github.com/k1LoW/sshc/compare/v4.3.3...v4.3.4) - 2026-09-28
+
+- ci: generate CREDITS with gocredits v1.0.0 from a make target by @k1LoW in https://github.com/k1LoW/sshc/pull/69
+
 ## [v4.3.3](https://github.com/k1LoW/sshc/compare/v4.3.2...v4.3.3) - 2026-07-10
 
 - chore(deps): bump golang.org/x/crypto from 0.40.0 to 0.52.0 in /example/ssh by @dependabot[bot] in https://github.com/k1LoW/sshc/pull/67
